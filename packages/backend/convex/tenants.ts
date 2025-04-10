@@ -321,4 +321,61 @@ export const removeTenant = mutation({
 
     return true;
   },
+});
+
+/**
+ * Update a tenant
+ */
+export const update = mutation({
+  args: {
+    id: v.id("tenants"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find user by Clerk ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if the tenant exists
+    const tenant = await ctx.db.get(args.id);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+
+    // Check if user has admin role for this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", user._id).eq("tenantId", args.id)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to update this tenant");
+    }
+
+    // Update the tenant
+    await ctx.db.patch(args.id, {
+      name: args.name,
+      description: args.description,
+      logoUrl: args.logoUrl,
+    });
+
+    return true;
+  },
 }); 

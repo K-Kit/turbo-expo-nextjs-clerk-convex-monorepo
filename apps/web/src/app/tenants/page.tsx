@@ -23,25 +23,9 @@ interface Tenant {
 export default function Tenants() {
 //   const { user } = useUser();
   const tenants = useQuery(api.tenants.list) as Tenant[] | undefined;
-  const createTenant = useMutation(api.tenants.create);
   const deleteTenant = useMutation(api.tenants.removeTenant);
   
-  const [newTenantName, setNewTenantName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState<Id<"tenants"> | null>(null);
-
-  const handleCreateTenant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTenantName.trim()) return;
-    
-    try {
-      await createTenant({ name: newTenantName });
-      setNewTenantName("");
-      setIsCreating(false);
-    } catch (error) {
-      console.error("Failed to create tenant:", error);
-    }
-  };
 
   const handleDeleteTenant = async (tenantId: Id<"tenants">) => {
     try {
@@ -66,58 +50,17 @@ export default function Tenants() {
             </p>
           </div>
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-            <button
-              type="button"
-              onClick={() => setIsCreating(true)}
+            <Link
+              href="/tenants/new"
               className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               <span className="flex items-center">
                 <Plus className="h-4 w-4 mr-1" />
                 Add tenant
               </span>
-            </button>
+            </Link>
           </div>
         </div>
-
-        {isCreating && (
-          <div className="mt-8 p-4 bg-white shadow sm:rounded-lg">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Create New Tenant</h3>
-            <form onSubmit={handleCreateTenant} className="mt-4 space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Organization Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    value={newTenantName}
-                    onChange={(e) => setNewTenantName(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter organization name"
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCreating(false)}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         <div className="mt-8 flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -197,14 +140,13 @@ export default function Tenants() {
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">No tenants</h3>
                     <p className="mt-1 text-sm text-gray-500">Get started by creating a new tenant.</p>
                     <div className="mt-6">
-                      <button
-                        onClick={() => setIsCreating(true)}
-                        type="button"
+                      <Link
+                        href="/tenants/new"
                         className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                       >
                         <Plus className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
                         Add tenant
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 )}
