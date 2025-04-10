@@ -67,8 +67,8 @@ export default defineSchema({
   userWorksites: defineTable({
     userId: v.id("users"),
     worksiteId: v.id("worksites"),
-    role: v.string(), // supervisor, worker, etc.
-    joinedAt: v.number(), // timestamp
+    role: v.string(), // admin, member, etc.
+    assignedAt: v.number(), // timestamp
   })
   .index("by_user", ["userId"])
   .index("by_worksite", ["worksiteId"])

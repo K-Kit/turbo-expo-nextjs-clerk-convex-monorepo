@@ -296,4 +296,248 @@ export const listByTenant = query({
     // Filter out null entries
     return users.filter((user): user is NonNullable<typeof user> => user !== null);
   },
+});
+
+/**
+ * Add a user to a tenant
+ */
+export const addUserToTenant = mutation({
+  args: {
+    email: v.string(),
+    role: v.string(),
+    tenantId: v.id("tenants"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if tenant exists
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+
+    // Check if current user has admin access to this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to add users to this tenant");
+    }
+
+    // Find the user to add by email
+    const userToAdd = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    // If user doesn't exist, throw error - users must be registered first
+    if (!userToAdd) {
+      throw new Error("User not found with this email address");
+    }
+
+    // Check if user is already a member of this tenant
+    const existingMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", userToAdd._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (existingMembership) {
+      // Update role if different
+      if (existingMembership.role !== args.role) {
+        await ctx.db.patch(existingMembership._id, {
+          role: args.role,
+        });
+      }
+      return true;
+    }
+
+    // Add user to tenant with specified role
+    await ctx.db.insert("userTenants", {
+      userId: userToAdd._id,
+      tenantId: args.tenantId,
+      role: args.role,
+      joinedAt: Date.now(),
+    });
+
+    return true;
+  },
+});
+
+/**
+ * Remove a user from a tenant
+ */
+export const removeUserFromTenant = mutation({
+  args: {
+    userId: v.id("users"),
+    tenantId: v.id("tenants"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if tenant exists
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+
+    // Check if current user has admin access to this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to remove users from this tenant");
+    }
+
+    // Ensure user isn't removing themselves
+    if (args.userId === currentUser._id) {
+      throw new Error("Cannot remove yourself from the tenant");
+    }
+
+    // Find the membership to remove
+    const membershipToRemove = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", args.userId).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membershipToRemove) {
+      return false; // User is not a member of this tenant
+    }
+
+    // Remove the user from all worksites in this tenant
+    const worksites = await ctx.db
+      .query("worksites")
+      .withIndex("by_tenant", (q) => q.eq("tenantId", args.tenantId))
+      .collect();
+
+    for (const worksite of worksites) {
+      const userWorksite = await ctx.db
+        .query("userWorksites")
+        .withIndex("by_user_and_worksite", (q) => 
+          q.eq("userId", args.userId).eq("worksiteId", worksite._id)
+        )
+        .unique();
+
+      if (userWorksite) {
+        await ctx.db.delete(userWorksite._id);
+      }
+    }
+
+    // Remove user from tenant
+    await ctx.db.delete(membershipToRemove._id);
+
+    return true;
+  },
+});
+
+/**
+ * Update a user's role in a tenant
+ */
+export const updateUserRole = mutation({
+  args: {
+    userId: v.id("users"),
+    tenantId: v.id("tenants"),
+    role: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if tenant exists
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+
+    // Check if current user has admin access to this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to update user roles in this tenant");
+    }
+
+    // Ensure user isn't updating their own role
+    if (args.userId === currentUser._id) {
+      throw new Error("Cannot update your own role");
+    }
+
+    // Find the membership to update
+    const membershipToUpdate = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", args.userId).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membershipToUpdate) {
+      throw new Error("User is not a member of this tenant");
+    }
+
+    // Update role
+    await ctx.db.patch(membershipToUpdate._id, {
+      role: args.role,
+    });
+
+    return true;
+  },
 }); 

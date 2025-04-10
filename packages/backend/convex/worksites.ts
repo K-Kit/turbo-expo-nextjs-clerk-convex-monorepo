@@ -237,10 +237,10 @@ export const get = query({
 /**
  * Add a user to a worksite
  */
-export const addUser = mutation({
+export const addUserToWorksite = mutation({
   args: {
-    worksiteId: v.id("worksites"),
     userId: v.id("users"),
+    worksiteId: v.id("worksites"),
     role: v.string(),
   },
   returns: v.boolean(),
@@ -251,47 +251,63 @@ export const addUser = mutation({
       throw new Error("Unauthenticated");
     }
 
-    // Find user by Clerk ID
+    // Find current user
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!currentUser) {
-      throw new Error("User not found");
+      throw new Error("Current user not found");
     }
 
-    // Get worksite details
+    // Check if worksite exists
     const worksite = await ctx.db.get(args.worksiteId);
     if (!worksite) {
       throw new Error("Worksite not found");
     }
 
-    // Check if current user is an admin of this worksite
-    const currentUserMembership = await ctx.db
-      .query("userWorksites")
-      .withIndex("by_user_and_worksite", (q) => 
-        q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+    // Check if current user has admin access to the tenant
+    const tenantMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
       )
       .unique();
 
-    if (!currentUserMembership || currentUserMembership.role !== "admin") {
-      throw new Error("Insufficient permissions");
+    if (!tenantMembership) {
+      throw new Error("Not authorized to access this tenant");
     }
 
-    // Check if target user is a member of the tenant
-    const targetUserTenantMembership = await ctx.db
+    // Check if current user has admin or manager role for the tenant or worksite
+    const hasAdminAccess = tenantMembership.role === "admin";
+    
+    if (!hasAdminAccess) {
+      const worksiteMembership = await ctx.db
+        .query("userWorksites")
+        .withIndex("by_user_and_worksite", (q) => 
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        )
+        .unique();
+      
+      if (!worksiteMembership || worksiteMembership.role !== "manager") {
+        throw new Error("Not authorized to add users to this worksite");
+      }
+    }
+
+    // Check if user belongs to the tenant
+    const userTenantMembership = await ctx.db
       .query("userTenants")
       .withIndex("by_user_and_tenant", (q) => 
         q.eq("userId", args.userId).eq("tenantId", worksite.tenantId)
       )
       .unique();
 
-    if (!targetUserTenantMembership) {
-      throw new Error("User is not a member of this tenant");
+    if (!userTenantMembership) {
+      throw new Error("User must be a member of the tenant first");
     }
 
-    // Check if user is already a member of this worksite
+    // Check if user is already assigned to this worksite
     const existingMembership = await ctx.db
       .query("userWorksites")
       .withIndex("by_user_and_worksite", (q) => 
@@ -300,21 +316,273 @@ export const addUser = mutation({
       .unique();
 
     if (existingMembership) {
-      // Update the role
-      await ctx.db.patch(existingMembership._id, {
-        role: args.role,
-      });
-    } else {
-      // Add user to worksite
-      await ctx.db.insert("userWorksites", {
-        userId: args.userId,
-        worksiteId: args.worksiteId,
-        role: args.role,
-        joinedAt: Date.now(),
-      });
+      // Update role if different
+      if (existingMembership.role !== args.role) {
+        await ctx.db.patch(existingMembership._id, {
+          role: args.role,
+        });
+      }
+      return true;
     }
 
+    // Add user to worksite with specified role
+    await ctx.db.insert("userWorksites", {
+      userId: args.userId,
+      worksiteId: args.worksiteId,
+      role: args.role,
+      assignedAt: Date.now(),
+    });
+
     return true;
+  },
+});
+
+/**
+ * Remove a user from a worksite
+ */
+export const removeUserFromWorksite = mutation({
+  args: {
+    userId: v.id("users"),
+    worksiteId: v.id("worksites"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if worksite exists
+    const worksite = await ctx.db.get(args.worksiteId);
+    if (!worksite) {
+      throw new Error("Worksite not found");
+    }
+
+    // Check if current user has admin access to the tenant
+    const tenantMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
+      )
+      .unique();
+
+    if (!tenantMembership) {
+      throw new Error("Not authorized to access this tenant");
+    }
+
+    // Check if current user has admin or manager role for the tenant or worksite
+    const hasAdminAccess = tenantMembership.role === "admin";
+    
+    if (!hasAdminAccess) {
+      const worksiteMembership = await ctx.db
+        .query("userWorksites")
+        .withIndex("by_user_and_worksite", (q) => 
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        )
+        .unique();
+      
+      if (!worksiteMembership || worksiteMembership.role !== "manager") {
+        throw new Error("Not authorized to remove users from this worksite");
+      }
+    }
+
+    // Ensure user isn't removing themselves
+    if (args.userId === currentUser._id) {
+      throw new Error("Cannot remove yourself from the worksite");
+    }
+
+    // Find the membership to remove
+    const membershipToRemove = await ctx.db
+      .query("userWorksites")
+      .withIndex("by_user_and_worksite", (q) => 
+        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId)
+      )
+      .unique();
+
+    if (!membershipToRemove) {
+      return false; // User is not assigned to this worksite
+    }
+
+    // Remove user from worksite
+    await ctx.db.delete(membershipToRemove._id);
+
+    return true;
+  },
+});
+
+/**
+ * Update a user's role in a worksite
+ */
+export const updateUserWorksiteRole = mutation({
+  args: {
+    userId: v.id("users"),
+    worksiteId: v.id("worksites"),
+    role: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if worksite exists
+    const worksite = await ctx.db.get(args.worksiteId);
+    if (!worksite) {
+      throw new Error("Worksite not found");
+    }
+
+    // Check if current user has admin access to the tenant
+    const tenantMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
+      )
+      .unique();
+
+    if (!tenantMembership) {
+      throw new Error("Not authorized to access this tenant");
+    }
+
+    // Check if current user has admin or manager role for the tenant or worksite
+    const hasAdminAccess = tenantMembership.role === "admin";
+    
+    if (!hasAdminAccess) {
+      const worksiteMembership = await ctx.db
+        .query("userWorksites")
+        .withIndex("by_user_and_worksite", (q) => 
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        )
+        .unique();
+      
+      if (!worksiteMembership || worksiteMembership.role !== "manager") {
+        throw new Error("Not authorized to update user roles in this worksite");
+      }
+    }
+
+    // Ensure user isn't updating their own role
+    if (args.userId === currentUser._id) {
+      throw new Error("Cannot update your own role");
+    }
+
+    // Find the membership to update
+    const membershipToUpdate = await ctx.db
+      .query("userWorksites")
+      .withIndex("by_user_and_worksite", (q) => 
+        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId)
+      )
+      .unique();
+
+    if (!membershipToUpdate) {
+      throw new Error("User is not assigned to this worksite");
+    }
+
+    // Update role
+    await ctx.db.patch(membershipToUpdate._id, {
+      role: args.role,
+    });
+
+    return true;
+  },
+});
+
+/**
+ * List users for a worksite
+ */
+export const listWorksiteUsers = query({
+  args: {
+    worksiteId: v.id("worksites"),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("users"),
+      name: v.string(),
+      email: v.string(),
+      profilePicture: v.optional(v.string()),
+      role: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Find user by Clerk ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    // Check if worksite exists
+    const worksite = await ctx.db.get(args.worksiteId);
+    if (!worksite) {
+      return [];
+    }
+
+    // Check if user has access to the tenant
+    const tenantMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", user._id).eq("tenantId", worksite.tenantId)
+      )
+      .unique();
+
+    if (!tenantMembership) {
+      return [];
+    }
+
+    // Get all users assigned to this worksite
+    const userWorksites = await ctx.db
+      .query("userWorksites")
+      .withIndex("by_worksite", (q) => q.eq("worksiteId", args.worksiteId))
+      .collect();
+
+    // Fetch user details
+    const users = await Promise.all(
+      userWorksites.map(async (userWorksite) => {
+        const userData = await ctx.db.get(userWorksite.userId);
+        if (!userData) return null;
+        
+        return {
+          _id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          profilePicture: userData.profilePicture,
+          role: userWorksite.role,
+        };
+      })
+    );
+
+    // Filter out null entries
+    return users.filter((u): u is NonNullable<typeof u> => u !== null);
   },
 });
 

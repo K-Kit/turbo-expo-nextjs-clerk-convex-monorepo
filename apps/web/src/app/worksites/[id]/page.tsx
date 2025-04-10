@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import Header from "@/components/Header";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Building, Edit, Users } from "lucide-react";
+import { ArrowLeft, MapPin, Building, Edit, Users, Plus, ChevronRight, Trash2, Pencil } from "lucide-react";
 import { Id } from "@packages/backend/convex/_generated/dataModel";
 
 interface Worksite {
@@ -27,18 +27,121 @@ interface Tenant {
   name: string;
 }
 
-export default function WorksiteDetails() {
+export default function WorksiteDetail() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const worksiteId = params.id as string;
   
-  const worksite = useQuery(api.worksites.get, { 
-    worksiteId: id as Id<"worksites"> 
-  }) as Worksite | null | undefined;
+  const worksite = useQuery(api.worksites.get, { worksiteId: worksiteId as Id<"worksites"> }) as Worksite | null | undefined;
   
-  const tenant = worksite ? useQuery(api.tenants.get, { 
-    tenantId: worksite.tenantId 
-  }) : undefined;
+  const tenant = useQuery(api.tenants.get, { 
+    tenantId: worksite?.tenantId as Id<"tenants">
+  });
+
+  const worksiteUsers = useQuery(api.worksites.listWorksiteUsers, { worksiteId: worksiteId as Id<"worksites"> });
+  const tenantUsers = useQuery(api.users.listByTenant, { tenantId: worksite?.tenantId as Id<"tenants"> });
+  const deleteWorksite = useMutation(api.worksites.deleteWorksite);
+  const addUser = useMutation(api.worksites.addUserToWorksite);
+  const removeUser = useMutation(api.worksites.removeUserFromWorksite);
+  const updateUserRole = useMutation(api.worksites.updateUserWorksiteRole);
+  
+  // Get current user
+  const currentUser = useQuery(api.users.me);
+  const currentUserId = currentUser?._id;
+  
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | "">("");
+  const [newUserRole, setNewUserRole] = useState("member");
+  const [addUserError, setAddUserError] = useState<string | null>(null);
+  const [userToRemove, setUserToRemove] = useState<Id<"users"> | null>(null);
+  const [isRemovingUser, setIsRemovingUser] = useState<Id<"users"> | null>(null);
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [isChangingRole, setIsChangingRole] = useState<Id<"users"> | null>(null);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      setError(null);
+      await deleteWorksite({ worksiteId: worksiteId as Id<"worksites"> });
+      router.push(`/tenants/${worksite?.tenantId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete worksite");
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserId) {
+      setAddUserError("Please select a user");
+      return;
+    }
+    
+    try {
+      setIsAddingUser(true);
+      setAddUserError(null);
+      await addUser({
+        userId: selectedUserId as Id<"users">,
+        worksiteId: worksiteId as Id<"worksites">,
+        role: newUserRole
+      });
+      setShowAddUserForm(false);
+      setSelectedUserId("");
+      setNewUserRole("member");
+      setIsAddingUser(false);
+    } catch (err) {
+      setAddUserError(err instanceof Error ? err.message : "Failed to add user");
+      setIsAddingUser(false);
+    }
+  };
+
+  const handleRemoveUser = (userId: Id<"users">) => {
+    setUserToRemove(userId);
+  };
+
+  const confirmRemoveUser = async () => {
+    if (!userToRemove) return;
+    
+    try {
+      setIsRemovingUser(userToRemove);
+      await removeUser({
+        userId: userToRemove,
+        worksiteId: worksiteId as Id<"worksites">
+      });
+      setUserToRemove(null);
+      setIsRemovingUser(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove user");
+      setIsRemovingUser(null);
+    }
+  };
+  
+  const handleRoleChange = async (userId: Id<"users">, newRole: string) => {
+    try {
+      setIsChangingRole(userId);
+      await updateUserRole({
+        userId,
+        worksiteId: worksiteId as Id<"worksites">,
+        role: newRole
+      });
+      setIsChangingRole(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update user role");
+      setIsChangingRole(null);
+    }
+  };
+
+  // Get users who are in the tenant but not in the worksite
+  const getAvailableUsers = () => {
+    if (!tenantUsers || !worksiteUsers) return [];
+    
+    const worksiteUserIds = new Set(worksiteUsers.map(user => user._id));
+    return tenantUsers.filter(user => !worksiteUserIds.has(user._id));
+  };
 
   if (worksite === undefined) {
     return (
@@ -121,14 +224,50 @@ export default function WorksiteDetails() {
           </div>
           <div className="mt-4 flex md:ml-4 md:mt-0">
             <Link
-              href={`/worksites/${worksite._id}/edit`}
+              href={`/worksites/${worksiteId}/edit`}
               className="ml-3 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               <Edit className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
               Edit Worksite
             </Link>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="ml-3 inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </button>
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-lg font-medium text-gray-900">Delete Worksite</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Are you sure you want to delete this worksite? This action cannot be undone.
+              </p>
+              <div className="mt-4 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Main Details */}

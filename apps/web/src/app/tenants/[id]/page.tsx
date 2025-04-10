@@ -7,7 +7,7 @@ import { api } from "@packages/backend/convex/_generated/api";
 import { Id } from "@packages/backend/convex/_generated/dataModel";
 import Header from "@/components/Header";
 import Link from "next/link";
-import { ArrowLeft, Building, Pencil, Trash2, Users, MapPin } from "lucide-react";
+import { ArrowLeft, Building, Pencil, Trash2, Users, MapPin, Plus, ChevronRight } from "lucide-react";
 
 export default function TenantDetail() {
   const params = useParams();
@@ -18,10 +18,25 @@ export default function TenantDetail() {
   const users = useQuery(api.users.listByTenant, { tenantId: tenantId as Id<"tenants"> });
   const worksites = useQuery(api.worksites.listByTenant, { tenantId: tenantId as Id<"tenants"> });
   const deleteTenant = useMutation(api.tenants.removeTenant);
+  const addUser = useMutation(api.users.addUserToTenant);
+  const removeUser = useMutation(api.users.removeUserFromTenant);
+  const updateUserRole = useMutation(api.users.updateUserRole);
+  
+  // Get current user
+  const currentUser = useQuery(api.users.me);
+  const currentUserId = currentUser?._id;
   
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState("member");
+  const [addUserError, setAddUserError] = useState<string | null>(null);
+  const [userToRemove, setUserToRemove] = useState<Id<"users"> | null>(null);
+  const [isRemovingUser, setIsRemovingUser] = useState<Id<"users"> | null>(null);
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [isChangingRole, setIsChangingRole] = useState<Id<"users"> | null>(null);
 
   const handleDelete = async () => {
     try {
@@ -33,6 +48,62 @@ export default function TenantDetail() {
       setError(err instanceof Error ? err.message : "Failed to delete tenant");
       setIsDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsAddingUser(true);
+      setAddUserError(null);
+      await addUser({
+        email: newUserEmail,
+        role: newUserRole,
+        tenantId: tenantId as Id<"tenants">
+      });
+      setShowAddUserForm(false);
+      setNewUserEmail("");
+      setNewUserRole("member");
+      setIsAddingUser(false);
+    } catch (err) {
+      setAddUserError(err instanceof Error ? err.message : "Failed to add user");
+      setIsAddingUser(false);
+    }
+  };
+
+  const handleRemoveUser = (userId: Id<"users">) => {
+    setUserToRemove(userId);
+  };
+
+  const confirmRemoveUser = async () => {
+    if (!userToRemove) return;
+    
+    try {
+      setIsRemovingUser(userToRemove);
+      await removeUser({
+        userId: userToRemove,
+        tenantId: tenantId as Id<"tenants">
+      });
+      setUserToRemove(null);
+      setIsRemovingUser(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove user");
+      setIsRemovingUser(null);
+    }
+  };
+  
+  const handleRoleChange = async (userId: Id<"users">, newRole: string) => {
+    try {
+      setIsChangingRole(userId);
+      await updateUserRole({
+        userId,
+        tenantId: tenantId as Id<"tenants">,
+        role: newRole
+      });
+      setIsChangingRole(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update user role");
+      setIsChangingRole(null);
     }
   };
 
