@@ -32,13 +32,16 @@ export default function Home() {
                   </p>
                   <div className="mt-10 flex items-center gap-x-6">
                     <Link
+                      href="/sign-in"
+                      className="text-sm font-semibold leading-6 text-gray-900"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
                       href="/sign-up"
-                      className="rounded-md bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     >
                       Get started
-                    </Link>
-                    <Link href="#features" className="text-sm font-semibold leading-6 text-gray-900 flex items-center">
-                      Learn more <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import Header from "@/components/Header";
 import Link from "next/link";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/nextjs";
 import { Building2, Users, Map, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 
