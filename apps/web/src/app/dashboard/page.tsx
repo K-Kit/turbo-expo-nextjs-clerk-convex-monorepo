@@ -7,9 +7,11 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { Building2, Users, Map, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const { user } = useUser();
+  const router = useRouter();
   const [greeting, setGreeting] = useState("");
 
   // Fetch tenants for the current user
@@ -22,6 +24,17 @@ export default function Dashboard() {
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
   }, []);
+
+  // Check for pending invites in localStorage and redirect
+  useEffect(() => {
+    const pendingInvite = localStorage.getItem("pendingInvite");
+    if (pendingInvite) {
+      // Clear the pending invite from localStorage
+      localStorage.removeItem("pendingInvite");
+      // Redirect to the invite page
+      router.push(`/invite/${pendingInvite}`);
+    }
+  }, [router]);
 
   // Stats cards for dashboard
   const stats = [

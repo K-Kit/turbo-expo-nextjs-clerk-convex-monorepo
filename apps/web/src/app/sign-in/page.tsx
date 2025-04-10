@@ -3,8 +3,12 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/tenants';
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 self-start ml-4 sm:ml-8">
@@ -41,7 +45,7 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            redirectUrl="/tenants"
+            redirectUrl={redirectUrl}
           />
         </div>
       </div>

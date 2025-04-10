@@ -69,7 +69,7 @@ export const create = mutation({
       userId: user._id,
       worksiteId,
       role: "admin",
-      joinedAt: Date.now(),
+      assignedAt: Date.now(),
     });
 
     return worksiteId;

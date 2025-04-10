@@ -3,8 +3,12 @@
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function SignUpPage() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/tenants';
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 self-start ml-4 sm:ml-8">
@@ -22,7 +26,7 @@ export default function SignUpPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{" "}
             <Link
-              href="/sign-in"
+              href={`/sign-in${redirectUrl !== '/tenants' ? `?redirect=${redirectUrl}` : ''}`}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               sign in to your existing account
@@ -40,8 +44,8 @@ export default function SignUpPage() {
             }}
             routing="path"
             path="/sign-up"
-            signInUrl="/sign-in"
-            redirectUrl="/tenants"
+            signInUrl={`/sign-in${redirectUrl !== '/tenants' ? `?redirect=${redirectUrl}` : ''}`}
+            redirectUrl={redirectUrl}
           />
         </div>
       </div>

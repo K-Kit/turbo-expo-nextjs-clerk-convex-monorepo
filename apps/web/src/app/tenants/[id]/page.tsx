@@ -17,7 +17,7 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
 export default function TenantDetail() {
@@ -56,9 +56,13 @@ export default function TenantDetail() {
   const [newUserRole, setNewUserRole] = useState("member");
   const [addUserError, setAddUserError] = useState<string | null>(null);
   const [userToRemove, setUserToRemove] = useState<Id<"users"> | null>(null);
-  const [isRemovingUser, setIsRemovingUser] = useState<Id<"users"> | null>(null);
+  const [isRemovingUser, setIsRemovingUser] = useState<Id<"users"> | null>(
+    null,
+  );
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [isChangingRole, setIsChangingRole] = useState<Id<"users"> | null>(null);
+  const [isChangingRole, setIsChangingRole] = useState<Id<"users"> | null>(
+    null,
+  );
   const [addUserSuccess, setAddUserSuccess] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
@@ -81,7 +85,7 @@ export default function TenantDetail() {
       setIsAddingUser(true);
       setAddUserError(null);
       setAddUserSuccess(null);
-      
+
       try {
         // First try to add an existing user
         await addUser({
@@ -89,13 +93,14 @@ export default function TenantDetail() {
           role: newUserRole,
           tenantId: tenantId as Id<"tenants">,
         });
-        
+
         setShowAddUserForm(false);
         setNewUserEmail("");
         setNewUserRole("member");
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to add user";
-        
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to add user";
+
         // If the error is about a user not found, try sending an invitation instead
         if (errorMessage.includes("User not found")) {
           const result = await inviteUser({
@@ -103,7 +108,7 @@ export default function TenantDetail() {
             role: newUserRole,
             tenantId: tenantId as Id<"tenants">,
           });
-          
+
           setAddUserSuccess(result.message);
           setNewUserEmail("");
           setNewUserRole("member");
@@ -113,7 +118,9 @@ export default function TenantDetail() {
         }
       }
     } catch (err) {
-      setAddUserError(err instanceof Error ? err.message : "Failed to process request");
+      setAddUserError(
+        err instanceof Error ? err.message : "Failed to process request",
+      );
     } finally {
       setIsAddingUser(false);
     }
@@ -167,7 +174,10 @@ export default function TenantDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to cancel invitation",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to cancel invitation",
         variant: "destructive",
       });
     }
@@ -535,8 +545,9 @@ export default function TenantDetail() {
                       required
                     />
                     <p className="mt-1 text-sm text-gray-500">
-                      Enter the user's email. Registered users will be added immediately. 
-                      Non-registered users will receive an invitation via email.
+                      Enter the user's email. Registered users will be added
+                      immediately. Non-registered users will receive an
+                      invitation via email.
                     </p>
                   </div>
 
@@ -567,7 +578,11 @@ export default function TenantDetail() {
                       disabled={isAddingUser}
                       className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     >
-                      {isAddingUser ? "Processing..." : (addUserSuccess ? "Send Another" : "Add User")}
+                      {isAddingUser
+                        ? "Processing..."
+                        : addUserSuccess
+                          ? "Send Another"
+                          : "Add User"}
                     </button>
                     <button
                       type="button"
@@ -625,12 +640,16 @@ export default function TenantDetail() {
               <h3 className="text-lg font-medium">Pending Invitations</h3>
               <div className="mt-2">
                 {pendingInvites.map((invite) => (
-                  <div key={invite._id} className="flex items-center justify-between p-2 border rounded mb-2">
+                  <div
+                    key={invite._id}
+                    className="flex items-center justify-between p-2 border rounded mb-2"
+                  >
                     <div className="flex items-center">
                       <div className="ml-4">
                         <div className="font-medium">{invite.email}</div>
                         <div className="text-sm text-gray-500">
-                          Invited {new Date(invite._creationTime).toLocaleDateString()}
+                          Invited{" "}
+                          {new Date(invite._creationTime).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -751,7 +770,9 @@ export default function TenantDetail() {
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
                                     <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                      <span className="text-gray-500 font-medium">?</span>
+                                      <span className="text-gray-500 font-medium">
+                                        ?
+                                      </span>
                                     </div>
                                   </div>
                                   <div className="ml-4">
@@ -762,7 +783,10 @@ export default function TenantDetail() {
                                       </span>
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Invited {new Date(invite.invitedAt).toLocaleDateString()}
+                                      Invited{" "}
+                                      {new Date(
+                                        invite.invitedAt,
+                                      ).toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>
@@ -775,7 +799,11 @@ export default function TenantDetail() {
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 {tenant.userRole === "admin" && (
                                   <button
-                                    onClick={() => handleRemoveUser(invite._id as unknown as Id<"users">)}
+                                    onClick={() =>
+                                      handleRemoveUser(
+                                        invite._id as unknown as Id<"users">,
+                                      )
+                                    }
                                     className="text-red-600 hover:text-red-900"
                                   >
                                     Cancel Invite
@@ -787,7 +815,10 @@ export default function TenantDetail() {
                         </>
                       )}
 
-                      {(!users || (users.length === 0 && (!pendingInvites || pendingInvites.length === 0))) && (
+                      {(!users ||
+                        (users.length === 0 &&
+                          (!pendingInvites ||
+                            pendingInvites.length === 0))) && (
                         <tr>
                           <td
                             colSpan={3}

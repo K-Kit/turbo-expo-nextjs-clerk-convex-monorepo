@@ -5,7 +5,7 @@ import { QueryInitializer } from "convex/server";
 
 /**
  * Seed the database with test data
- * 
+ *
  * This script creates:
  * - 3 test users
  * - 2 tenants (companies)
@@ -16,22 +16,22 @@ export const seedDatabase = mutation({
   args: {},
   handler: async (ctx) => {
     console.log("Starting database seeding...");
-    
+
     // 1. Create test users
     const users = await createTestUsers(ctx);
-    
+
     // 2. Create test tenants and add users as members
     const tenants = await createTestTenants(ctx, users);
-    
+
     // 3. Create test worksites for each tenant
     const worksites = await createTestWorksites(ctx, tenants, users);
-    
+
     console.log("Database seeding completed successfully");
-    
+
     return {
       users,
       tenants,
-      worksites
+      worksites,
     };
   },
 });
@@ -41,7 +41,7 @@ export const seedDatabase = mutation({
  */
 async function createTestUsers(ctx: any) {
   console.log("Creating test users...");
-  
+
   const testUsers = [
     {
       name: "Admin User",
@@ -62,16 +62,16 @@ async function createTestUsers(ctx: any) {
       profilePicture: "https://randomuser.me/api/portraits/men/3.jpg",
     },
   ];
-  
+
   const userIds: Record<string, Id<"users">> = {};
-  
+
   for (const user of testUsers) {
     // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", user.clerkId))
+      .withIndex("by_clerk_id", (q: any) => q.eq("clerkId", user.clerkId))
       .unique();
-    
+
     if (existingUser) {
       console.log(`User ${user.name} already exists, skipping...`);
       userIds[user.clerkId] = existingUser._id;
@@ -81,16 +81,19 @@ async function createTestUsers(ctx: any) {
       userIds[user.clerkId] = userId;
     }
   }
-  
+
   return userIds;
 }
 
 /**
  * Create test tenants and add users as members
  */
-async function createTestTenants(ctx: any, userIds: Record<string, Id<"users">>) {
+async function createTestTenants(
+  ctx: any,
+  userIds: Record<string, Id<"users">>,
+) {
   console.log("Creating test tenants...");
-  
+
   const testTenants = [
     {
       name: "Acme Corporation",
@@ -103,15 +106,15 @@ async function createTestTenants(ctx: any, userIds: Record<string, Id<"users">>)
       logoUrl: "https://placehold.co/100x100?text=TB",
     },
   ];
-  
+
   const tenantIds: { id: Id<"tenants">; name: string }[] = [];
-  
+
   for (const tenant of testTenants) {
     // Create the tenant
     const tenantId = await ctx.db.insert("tenants", tenant);
     console.log(`Created tenant: ${tenant.name}`);
     tenantIds.push({ id: tenantId, name: tenant.name });
-    
+
     // Assign users to tenants with different roles
     await ctx.db.insert("userTenants", {
       userId: userIds["user_test_admin"],
@@ -119,24 +122,24 @@ async function createTestTenants(ctx: any, userIds: Record<string, Id<"users">>)
       role: "admin",
       joinedAt: Date.now(),
     });
-    
+
     await ctx.db.insert("userTenants", {
       userId: userIds["user_test_manager"],
       tenantId,
       role: "manager",
       joinedAt: Date.now(),
     });
-    
+
     await ctx.db.insert("userTenants", {
       userId: userIds["user_test_worker"],
       tenantId,
       role: "member",
       joinedAt: Date.now(),
     });
-    
+
     console.log(`Added users to tenant: ${tenant.name}`);
   }
-  
+
   return tenantIds;
 }
 
@@ -146,10 +149,10 @@ async function createTestTenants(ctx: any, userIds: Record<string, Id<"users">>)
 async function createTestWorksites(
   ctx: any,
   tenants: { id: Id<"tenants">; name: string }[],
-  userIds: Record<string, Id<"users">>
+  userIds: Record<string, Id<"users">>,
 ) {
   console.log("Creating test worksites...");
-  
+
   const worksitesData = [
     // Acme Corporation worksites
     {
@@ -182,7 +185,7 @@ async function createTestWorksites(
       address: "789 Broadway, New York, NY",
       coordinates: {
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       },
       radius: 150,
     },
@@ -198,28 +201,28 @@ async function createTestWorksites(
       radius: 300,
     },
   ];
-  
+
   const worksiteIds: Id<"worksites">[] = [];
-  
+
   for (const worksite of worksitesData) {
     // Create the worksite
     const worksiteId = await ctx.db.insert("worksites", worksite);
     console.log(`Created worksite: ${worksite.name}`);
     worksiteIds.push(worksiteId);
-    
+
     // Add geofence for the worksite (simple circular boundary based on coordinates and radius)
     await ctx.db.insert("geofences", {
       worksiteId,
       name: `${worksite.name} Primary Boundary`,
       description: `Main geofence for ${worksite.name}`,
       coordinates: generateCircleCoordinates(
-        worksite.coordinates.latitude, 
-        worksite.coordinates.longitude, 
-        worksite.radius
+        worksite.coordinates.latitude,
+        worksite.coordinates.longitude,
+        worksite.radius,
       ),
       isActive: true,
     });
-    
+
     // Add users to the worksite with different roles
     await ctx.db.insert("userWorksites", {
       userId: userIds["user_test_admin"],
@@ -227,24 +230,24 @@ async function createTestWorksites(
       role: "admin",
       joinedAt: Date.now(),
     });
-    
+
     await ctx.db.insert("userWorksites", {
       userId: userIds["user_test_manager"],
       worksiteId,
       role: "supervisor",
       joinedAt: Date.now(),
     });
-    
+
     await ctx.db.insert("userWorksites", {
       userId: userIds["user_test_worker"],
       worksiteId,
       role: "worker",
       joinedAt: Date.now(),
     });
-    
+
     console.log(`Added users to worksite: ${worksite.name}`);
   }
-  
+
   return worksiteIds;
 }
 
@@ -252,24 +255,31 @@ async function createTestWorksites(
  * Generate coordinates for a circular boundary
  * This creates a simple polygon approximation of a circle
  */
-function generateCircleCoordinates(centerLat: number, centerLng: number, radiusInMeters: number) {
+function generateCircleCoordinates(
+  centerLat: number,
+  centerLng: number,
+  radiusInMeters: number,
+) {
   const coordinates = [];
   const numPoints = 16; // Number of points to approximate the circle
-  
+
   // Convert radius from meters to approximate degrees
   // This is a simplified conversion that works reasonably well for small areas
   const radiusInDegrees = radiusInMeters / 111000; // ~111km per degree at the equator
-  
+
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * 2 * Math.PI;
     const lat = centerLat + radiusInDegrees * Math.cos(angle);
-    const lng = centerLng + radiusInDegrees * Math.sin(angle) / Math.cos(centerLat * (Math.PI / 180));
+    const lng =
+      centerLng +
+      (radiusInDegrees * Math.sin(angle)) /
+        Math.cos(centerLat * (Math.PI / 180));
     coordinates.push([lat, lng]);
   }
-  
+
   // Close the polygon by repeating the first point
   coordinates.push(coordinates[0]);
-  
+
   return coordinates;
 }
 
@@ -284,61 +294,63 @@ export const clearTestData = mutation({
   handler: async (ctx, args) => {
     // Safety check to prevent accidental deletion
     if (args.confirmation !== "DELETE_ALL_TEST_DATA") {
-      throw new Error('To confirm deletion, pass "DELETE_ALL_TEST_DATA" as the confirmation parameter');
+      throw new Error(
+        'To confirm deletion, pass "DELETE_ALL_TEST_DATA" as the confirmation parameter',
+      );
     }
-    
+
     console.log("Clearing all test data...");
-    
+
     // Delete data in reverse order of dependencies
-    
+
     // 1. Delete user-worksite relationships
     const userWorksites = await ctx.db.query("userWorksites").collect();
     for (const record of userWorksites) {
       await ctx.db.delete(record._id);
     }
-    
+
     // 2. Delete geofences
     const geofences = await ctx.db.query("geofences").collect();
     for (const record of geofences) {
       await ctx.db.delete(record._id);
     }
-    
+
     // 3. Delete worksites
     const worksites = await ctx.db.query("worksites").collect();
     for (const record of worksites) {
       await ctx.db.delete(record._id);
     }
-    
+
     // 4. Delete user-tenant relationships
     const userTenants = await ctx.db.query("userTenants").collect();
     for (const record of userTenants) {
       await ctx.db.delete(record._id);
     }
-    
+
     // 5. Delete tenants
     const tenants = await ctx.db.query("tenants").collect();
     for (const record of tenants) {
       await ctx.db.delete(record._id);
     }
-    
+
     // 6. Delete users with test clerk IDs
     const testUsers = await ctx.db
       .query("users")
-      .filter((q) => 
+      .filter((q) =>
         q.or(
           q.eq(q.field("clerkId"), "user_test_admin"),
           q.eq(q.field("clerkId"), "user_test_manager"),
-          q.eq(q.field("clerkId"), "user_test_worker")
-        )
+          q.eq(q.field("clerkId"), "user_test_worker"),
+        ),
       )
       .collect();
-      
+
     for (const user of testUsers) {
       await ctx.db.delete(user._id);
     }
-    
+
     console.log("All test data has been cleared");
-    
+
     return { success: true };
   },
-}); 
+});
