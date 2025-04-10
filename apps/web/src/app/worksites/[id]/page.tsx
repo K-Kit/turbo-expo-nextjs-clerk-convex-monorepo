@@ -332,23 +332,218 @@ export default function WorksiteDetail() {
           </div>
         </div>
         
-        {/* Users Section - Placeholder */}
+        {/* Users Section */}
         <div className="mt-6 bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg leading-6 font-medium text-gray-900">Assigned Users</h3>
               <button
                 type="button"
-                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                onClick={() => setShowAddUserForm(true)}
+                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                <Users className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-                Manage Users
+                <Plus className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+                Add User
               </button>
             </div>
-            <div className="bg-gray-50 text-center py-10 rounded-md">
-              <Users className="mx-auto h-10 w-10 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">No users assigned to this worksite yet</p>
-            </div>
+
+            {error && (
+              <div className="mb-4 rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">Error</h3>
+                    <div className="mt-2 text-sm text-red-700">{error}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* User list */}
+            {worksiteUsers && worksiteUsers.length > 0 ? (
+              <div className="overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {worksiteUsers.map((user) => (
+                      <tr key={user._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {user.profilePicture ? (
+                              <img
+                                className="h-8 w-8 rounded-full"
+                                src={user.profilePicture}
+                                alt=""
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                {user.name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user._id === currentUserId ? (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              {user.role}
+                            </span>
+                          ) : (
+                            <select
+                              value={user.role}
+                              onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                              disabled={isChangingRole === user._id}
+                              className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="manager">Manager</option>
+                              <option value="member">Member</option>
+                            </select>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          {user._id !== currentUserId && (
+                            <button
+                              onClick={() => handleRemoveUser(user._id)}
+                              disabled={isRemovingUser === user._id}
+                              className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            >
+                              {isRemovingUser === user._id ? (
+                                "Removing..."
+                              ) : (
+                                <Trash2 className="h-5 w-5" />
+                              )}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="bg-gray-50 text-center py-10 rounded-md">
+                <Users className="mx-auto h-10 w-10 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">No users assigned to this worksite yet</p>
+              </div>
+            )}
+
+            {/* Add User Form */}
+            {showAddUserForm && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                  <h3 className="text-lg font-medium text-gray-900">Add User to Worksite</h3>
+                  
+                  {addUserError && (
+                    <div className="mt-2 rounded-md bg-red-50 p-2">
+                      <p className="text-sm text-red-700">{addUserError}</p>
+                    </div>
+                  )}
+                  
+                  <form onSubmit={handleAddUser} className="mt-4">
+                    <div className="mb-4">
+                      <label htmlFor="userId" className="block text-sm font-medium text-gray-700">
+                        User
+                      </label>
+                      <select
+                        id="userId"
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value as Id<"users">)}
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="">Select a user</option>
+                        {getAvailableUsers().map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name} ({user.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                        Role
+                      </label>
+                      <select
+                        id="role"
+                        value={newUserRole}
+                        onChange={(e) => setNewUserRole(e.target.value)}
+                        className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="member">Member</option>
+                      </select>
+                    </div>
+                    
+                    <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                      <button
+                        type="submit"
+                        disabled={isAddingUser}
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                      >
+                        {isAddingUser ? "Adding..." : "Add User"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddUserForm(false)}
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Remove User Confirmation */}
+            {userToRemove && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                  <h3 className="text-lg font-medium text-gray-900">Remove User</h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Are you sure you want to remove this user from the worksite? This action cannot be undone.
+                  </p>
+                  <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button
+                      type="button"
+                      onClick={confirmRemoveUser}
+                      disabled={isRemovingUser !== null}
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
+                    >
+                      {isRemovingUser ? "Removing..." : "Remove"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserToRemove(null)}
+                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

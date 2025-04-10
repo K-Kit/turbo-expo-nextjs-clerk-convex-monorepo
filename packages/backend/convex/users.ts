@@ -349,9 +349,9 @@ export const addUserToTenant = mutation({
       .filter((q) => q.eq(q.field("email"), args.email))
       .first();
 
-    // If user doesn't exist, throw error - users must be registered first
+    // If user doesn't exist, throw error - they need to be invited instead
     if (!userToAdd) {
-      throw new Error("User not found with this email address");
+      throw new Error("User not found with this email address. Please use the invite feature instead.");
     }
 
     // Check if user is already a member of this tenant
@@ -372,6 +372,22 @@ export const addUserToTenant = mutation({
       return true;
     }
 
+    // Check if there's a pending invite for this user and accept it automatically
+    const pendingInvite = await ctx.db
+      .query("pendingInvites")
+      .withIndex("by_email_and_tenant", (q) => 
+        q.eq("email", args.email).eq("tenantId", args.tenantId)
+      )
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .first();
+    
+    if (pendingInvite) {
+      // Update the invite status to accepted
+      await ctx.db.patch(pendingInvite._id, {
+        status: "accepted"
+      });
+    }
+
     // Add user to tenant with specified role
     await ctx.db.insert("userTenants", {
       userId: userToAdd._id,
@@ -381,6 +397,151 @@ export const addUserToTenant = mutation({
     });
 
     return true;
+  },
+});
+
+/**
+ * Invite a user to a tenant
+ */
+export const inviteUserToTenant = mutation({
+  args: {
+    email: v.string(),
+    role: v.string(),
+    tenantId: v.id("tenants"),
+  },
+  returns: v.object({
+    success: v.boolean(),
+    message: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Check if tenant exists
+    const tenant = await ctx.db.get(args.tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+
+    // Check if current user has admin access to this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to invite users to this tenant");
+    }
+
+    // Check if a user with this email already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (existingUser) {
+      // If user exists, try to add them directly to the tenant
+      try {
+        // Check if user is already a member of this tenant
+        const existingMembership = await ctx.db
+          .query("userTenants")
+          .withIndex("by_user_and_tenant", (q) => 
+            q.eq("userId", existingUser._id).eq("tenantId", args.tenantId)
+          )
+          .unique();
+
+        if (existingMembership) {
+          // User is already a member, update role if needed
+          if (existingMembership.role !== args.role) {
+            await ctx.db.patch(existingMembership._id, {
+              role: args.role,
+            });
+          }
+          return {
+            success: true,
+            message: "User is already a member of this organization. Role updated if changed.",
+          };
+        }
+
+        // Add user to tenant with specified role
+        await ctx.db.insert("userTenants", {
+          userId: existingUser._id,
+          tenantId: args.tenantId,
+          role: args.role,
+          joinedAt: Date.now(),
+        });
+
+        return {
+          success: true,
+          message: "User was already registered and has been added to the organization.",
+        };
+      } catch (err) {
+        throw new Error(`Failed to add existing user: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // Check if there's already a pending invite for this email
+    const existingInvite = await ctx.db
+      .query("pendingInvites")
+      .withIndex("by_email_and_tenant", (q) => 
+        q.eq("email", args.email).eq("tenantId", args.tenantId)
+      )
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .first();
+
+    if (existingInvite) {
+      // Update the existing invite if role is different
+      if (existingInvite.role !== args.role) {
+        await ctx.db.patch(existingInvite._id, {
+          role: args.role,
+          invitedBy: currentUser._id,
+          invitedAt: Date.now(),
+        });
+      }
+      return {
+        success: true,
+        message: "Invitation already exists and has been updated.",
+      };
+    }
+
+    // Generate a random invite code
+    const inviteCode = Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
+
+    // Create the invitation
+    await ctx.db.insert("pendingInvites", {
+      email: args.email,
+      tenantId: args.tenantId,
+      role: args.role,
+      status: "pending",
+      inviteCode,
+      invitedBy: currentUser._id,
+      invitedAt: Date.now(),
+      // Set expiration to 7 days from now
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // In a real application, you would send an email here with the invite link
+    
+    return {
+      success: true,
+      message: "Invitation sent successfully.",
+    };
   },
 });
 
@@ -536,6 +697,146 @@ export const updateUserRole = mutation({
     // Update role
     await ctx.db.patch(membershipToUpdate._id, {
       role: args.role,
+    });
+
+    return true;
+  },
+});
+
+/**
+ * List pending invites for a tenant
+ */
+export const listPendingInvites = query({
+  args: {
+    tenantId: v.id("tenants"),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("pendingInvites"),
+      email: v.string(),
+      role: v.string(),
+      status: v.string(),
+      invitedAt: v.number(),
+      invitedBy: v.object({
+        _id: v.id("users"),
+        name: v.string(),
+        email: v.string(),
+      }),
+    })
+  ),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      return [];
+    }
+
+    // Check if user has access to this tenant
+    const tenantMembership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", args.tenantId)
+      )
+      .unique();
+
+    if (!tenantMembership) {
+      return [];
+    }
+
+    // Get all pending invites for this tenant
+    const pendingInvites = await ctx.db
+      .query("pendingInvites")
+      .withIndex("by_tenant", (q) => q.eq("tenantId", args.tenantId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    // Get inviter details for each invite
+    const invitesWithDetails = await Promise.all(
+      pendingInvites.map(async (invite) => {
+        const inviter = await ctx.db.get(invite.invitedBy);
+        if (!inviter) {
+          // Should never happen, but just in case
+          return null;
+        }
+
+        return {
+          _id: invite._id,
+          email: invite.email,
+          role: invite.role,
+          status: invite.status,
+          invitedAt: invite.invitedAt,
+          invitedBy: {
+            _id: inviter._id,
+            name: inviter.name,
+            email: inviter.email,
+          },
+        };
+      })
+    );
+
+    // Filter out any null entries (just in case)
+    return invitesWithDetails.filter((invite): invite is NonNullable<typeof invite> => 
+      invite !== null
+    );
+  },
+});
+
+/**
+ * Cancel a pending invite
+ */
+export const cancelInvite = mutation({
+  args: {
+    inviteId: v.id("pendingInvites"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Get the current user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Find current user
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("Current user not found");
+    }
+
+    // Get the invite
+    const invite = await ctx.db.get(args.inviteId);
+    if (!invite) {
+      throw new Error("Invitation not found");
+    }
+
+    // Check if current user has admin access to this tenant
+    const membership = await ctx.db
+      .query("userTenants")
+      .withIndex("by_user_and_tenant", (q) => 
+        q.eq("userId", currentUser._id).eq("tenantId", invite.tenantId as Id<"tenants">)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Not authorized to cancel invitations for this tenant");
+    }
+
+    // Update invite status to canceled
+    await ctx.db.patch(args.inviteId, {
+      status: "canceled",
     });
 
     return true;

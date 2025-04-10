@@ -89,4 +89,20 @@ export default defineSchema({
   .index("by_geofence", ["geofenceId"])
   .index("by_user_and_time", ["userId", "timestamp"])
   .index("by_worksite_and_time", ["worksiteId", "timestamp"]),
+  
+  // Pending invites for users who haven't registered yet
+  pendingInvites: defineTable({
+    email: v.string(),
+    tenantId: v.id("tenants"),
+    role: v.string(), // admin, member, etc.
+    status: v.string(), // pending, accepted, declined
+    inviteCode: v.string(), // unique code for accepting invitation
+    invitedBy: v.id("users"), // user who sent the invitation
+    invitedAt: v.number(), // timestamp when invitation was sent
+    expiresAt: v.optional(v.number()), // optional expiration timestamp
+  })
+  .index("by_email", ["email"])
+  .index("by_tenant", ["tenantId"])
+  .index("by_invite_code", ["inviteCode"])
+  .index("by_email_and_tenant", ["email", "tenantId"]),
 });
