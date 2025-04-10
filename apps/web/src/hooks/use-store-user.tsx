@@ -37,13 +37,3 @@ export function useStoreUserEffect() {
     isAuthenticated: isAuthenticated && userId !== null,
   };
 }
-
-export function UserStoreProvider({ children }: { children: React.ReactNode }) {
-  const { isLoading } = useStoreUserEffect();
-  return (
-    <div>
-      {isLoading && <div>Loading...</div>}
-      {!isLoading && children}
-    </div>
-  );
-}
