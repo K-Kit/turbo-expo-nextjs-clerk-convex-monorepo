@@ -1,90 +1,100 @@
-# Welcome to your Convex functions directory!
+# Geofencing Backend
 
-Write your Convex functions here. See
-https://docs.convex.dev/using/writing-convex-functions for more.
+This Convex backend provides the necessary APIs for a multi-tenant geofencing application. The system allows tenants (organizations) to manage worksites and geofences, and users can track their locations relative to defined geofences.
 
-A query function that takes two arguments looks like:
+## Data Model
 
-```ts
-// functions.js
-import { query } from "./_generated/server";
-import { v } from "convex/values";
+### Key Entities
 
-export const myQueryFunction = query({
-  // Validators for arguments.
-  args: {
-    first: v.number(),
-    second: v.string(),
-  },
+- **Users**: Individual users who can belong to multiple tenants and worksites
+- **Tenants**: Organizations that own worksites
+- **Worksites**: Physical locations belonging to tenants
+- **Geofences**: Polygon boundaries defining areas within worksites
+- **Check-ins**: Location records when users enter/exit geofences
 
-  // Function implementation.
-  handler: async (ctx, args) => {
-    // Read the database as many times as you need here.
-    // See https://docs.convex.dev/database/reading-data.
-    const documents = await ctx.db.query("tablename").collect();
+### Relationships
 
-    // Arguments passed from the client are properties of the args object.
-    console.log(args.first, args.second);
+- Users can belong to multiple tenants (many-to-many)
+- Users can be assigned to multiple worksites (many-to-many)
+- Tenants can have multiple worksites (one-to-many)
+- Worksites can have multiple geofences (one-to-many)
 
-    // Write arbitrary JavaScript here: filter, aggregate, build derived data,
-    // remove non-public properties, or create new objects.
-    return documents;
-  },
-});
-```
+## Authentication & Authorization
 
-Using this query function in a React component looks like:
+Authentication is handled via Clerk, with role-based access control implemented in the backend:
 
-```ts
-const data = useQuery(api.functions.myQueryFunction, {
-  first: 10,
-  second: "hello",
-});
-```
+### Tenant Roles
 
-A mutation function looks like:
+- **Admin**: Full access to manage the tenant, worksites, and users
+- **Manager**: Can manage worksites and users
+- **Member**: Basic access to tenant resources
 
-```ts
-// functions.js
-import { mutation } from "./_generated/server";
-import { v } from "convex/values";
+### Worksite Roles
 
-export const myMutationFunction = mutation({
-  // Validators for arguments.
-  args: {
-    first: v.string(),
-    second: v.string(),
-  },
+- **Admin**: Full access to manage the worksite and its geofences
+- **Supervisor**: Can view all check-ins and manage some worksite settings
+- **Worker**: Basic access to check in/out of worksites
 
-  // Function implementation.
-  handler: async (ctx, args) => {
-    // Insert or modify documents in the database here.
-    // Mutations can also read from the database like queries.
-    // See https://docs.convex.dev/database/writing-data.
-    const message = { body: args.first, author: args.second };
-    const id = await ctx.db.insert("messages", message);
+## API Modules
 
-    // Optionally, return a value from your mutation.
-    return await ctx.db.get(id);
-  },
-});
-```
+### Users
 
-Using this mutation function in a React component looks like:
+- `users.getOrCreate`: Register or retrieve a user by Clerk ID
+- `users.me`: Get the current authenticated user
+- `users.get`: Get user by ID
+- `users.search`: Search users by name or email
+- `users.listByTenant`: List all users within a tenant
 
-```ts
-const mutation = useMutation(api.functions.myMutationFunction);
-function handleButtonPress() {
-  // fire and forget, the most common way to use mutations
-  mutation({ first: "Hello!", second: "me" });
-  // OR
-  // use the result once the mutation has completed
-  mutation({ first: "Hello!", second: "me" }).then((result) =>
-    console.log(result),
-  );
-}
-```
+### Tenants
 
-Use the Convex CLI to push your functions to a deployment. See everything
-the Convex CLI can do by running `npx convex -h` in your project root
-directory. To learn more, launch the docs with `npx convex docs`.
+- `tenants.create`: Create a new tenant
+- `tenants.list`: List all tenants for the current user
+- `tenants.get`: Get tenant details
+- `tenants.joinTenant`: Join a tenant (requires invite code implementation)
+
+### Worksites
+
+- `worksites.create`: Create a new worksite for a tenant
+- `worksites.listByTenant`: List all worksites for a tenant
+- `worksites.get`: Get worksite details
+- `worksites.addUser`: Add a user to a worksite
+
+### Geofences
+
+- `geofences.create`: Create a new geofence for a worksite
+- `geofences.listByWorksite`: List all geofences for a worksite
+- `geofences.checkIn`: Record a check-in at the current location
+- `geofences.getCheckInHistory`: Get check-in history for a user and worksite
+- `geofences.getWorksiteCheckIns`: Get check-in data for all users in a worksite (admin only)
+
+## Utility Modules
+
+### Auth Utilities
+
+Functions for authentication and authorization logic:
+
+- `getAuthenticatedUser`: Get the current user from auth context
+- `requireAuth`: Require authenticated user or throw error
+- `checkTenantAccess`: Check if user has access to a tenant
+- `requireTenantRole`: Require specific tenant role
+- `checkWorksiteAccess`: Check if user has access to a worksite
+- `requireWorksiteRole`: Require specific worksite role
+
+### Geofencing Utilities
+
+Functions for geofencing calculations:
+
+- `isPointInPolygon`: Check if a point is inside a polygon
+- `calculatePolygonArea`: Calculate the area of a polygon
+- `calculateDistance`: Calculate distance between two points
+- `findClosestPointOnPolygon`: Find closest point on polygon to a given point
+- `isValidPolygon`: Validate polygon properties
+- `ensureClosedPolygon`: Ensure polygon is properly closed
+
+## Getting Started
+
+1. Set up Clerk for authentication
+2. Configure your frontend to use the Convex APIs
+3. Create a tenant and add users
+4. Define worksites with geofences
+5. Implement location tracking and check-ins

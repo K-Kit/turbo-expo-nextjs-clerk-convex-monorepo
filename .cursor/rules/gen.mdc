@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+use bun package manager
+
+the convex directory is located at ./packages/backend

@@ -16,9 +16,7 @@ export default function ConvexClientProvider({
   return (
     // NOTE: Once you get Clerk working you can remove this error boundary
     <ErrorBoundary>
-      <ClerkProvider
-        publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
-      >
+      <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           {children}
         </ConvexProviderWithClerk>
