@@ -376,4 +376,38 @@ export const deleteProjectTask = mutation({
     await ctx.db.delete(args.id);
     return null;
   },
+});
+
+/**
+ * Get contractors assigned to a project
+ */
+export const getProjectContractors = query({
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+    
+    // Check if user is in tenant
+    await checkUserInTenant(ctx, project.tenantId);
+    
+    // Get all assignments for this project
+    const assignments = await ctx.db
+      .query("contractorAssignments")
+      .withIndex("by_project", (q: any) => q.eq("projectId", args.projectId))
+      .collect();
+    
+    // Get unique contractor IDs from assignments
+    const contractorIds = [...new Set(assignments.map(a => a.contractorId))];
+    
+    // Fetch the contractor details
+    const contractors = await Promise.all(
+      contractorIds.map(id => ctx.db.get(id))
+    );
+    
+    return contractors.filter(Boolean);
+  },
 }); 

@@ -27,7 +27,7 @@ export default function Home() {
                     Smart Geofencing for Modern Workforces
                   </h1>
                   <p className="mt-6 text-lg leading-8 text-gray-600">
-                    Track and manage your worksites with precision. GeoFence Pro provides
+                    Track and manage your worksites with precision. Worksafe Maps provides
                     powerful multi-tenant geofencing solutions for businesses of all sizes.
                   </p>
                   <div className="mt-10 flex items-center gap-x-6">
@@ -138,7 +138,7 @@ export default function Home() {
               Ready to take control of your worksites?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-indigo-100">
-              Start using GeoFence Pro today and experience the power of modern geofencing technology.
+              Start using WorkSafe Maps today and experience the power of modern geofencing technology.
               No credit card required for your first 30 days.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -164,7 +164,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div className="space-y-8">
-              <h3 className="text-xl font-bold text-white">GeoFence Pro</h3>
+              <h3 className="text-xl font-bold text-white">Worksafe Maps</h3>
               <p className="text-sm leading-6 text-gray-300">
                 Smart geofencing solutions for modern workforces.
               </p>
@@ -252,7 +252,7 @@ export default function Home() {
           </div>
           <div className="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24">
             <p className="text-xs leading-5 text-gray-400">
-              &copy; {new Date().getFullYear()} GeoFence Pro, Inc. All rights reserved.
+              &copy; {new Date().getFullYear()} Worksafe Maps, Inc. All rights reserved.
             </p>
           </div>
         </div>

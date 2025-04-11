@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GeoFence Pro",
+  title: "WorkSafe Maps",
   description: "Multi-tenant geofencing application for worksite management",
 };
 
@@ -23,11 +23,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
-        <meta name="description" content="GeoFence Pro" />
-        <meta name="author" content="GeoFence Pro" />
+        <meta name="description" content="WorkSafe Maps" />
+        <meta name="author" content="WorkSafe Maps" />
         <meta
           name="keywords"
-          content="GeoFence Pro, worksite management, geofencing, safety, construction"
+          content="WorkSafe Maps, worksite management, geofencing, safety, construction"
         />
       </head>
       <body className={inter.className}>

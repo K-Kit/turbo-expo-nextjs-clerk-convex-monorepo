@@ -1,7 +1,8 @@
 "use client";
 
+
 import { useState, FormEvent, ChangeEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
 import { Id } from "@/../../../packages/backend/convex/_generated/dataModel";
@@ -167,10 +168,11 @@ const LocationInput = ({ location, onChange }: LocationInputProps) => {
   );
 };
 
-export default function EditWorkOrderPage({ params }: { params: { id: string } }) {
+export default function EditWorkOrderPage() {
   const router = useRouter();
   const { toast } = useToast();
   const tenantId = useTenantId();
+  const params = useParams();
   const workOrderId = params.id as Id<"workOrders">;
   
   const workOrder = useQuery(api.workorders.getWorkOrder, { id: workOrderId });

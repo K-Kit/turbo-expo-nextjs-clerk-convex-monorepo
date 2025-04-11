@@ -12,7 +12,8 @@ import {
   Building, 
   Mail,
   Briefcase,
-  ClipboardList
+  ClipboardList,
+  HardHat
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { name: "Assets", href: "/assets", icon: TruckIcon },
   { name: "Projects", href: "/projects", icon: Briefcase },
   { name: "Work Orders", href: "/workorders", icon: ClipboardList },
+  { name: "Contractors", href: "/contractors", icon: HardHat },
   { name: "Incidents", href: "/incidents", icon: FileWarning },
   { name: "Worksites", href: "/worksites", icon: Building },
   { name: "Tenants", href: "/tenants", icon: Users },

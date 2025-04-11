@@ -319,6 +319,67 @@ export default defineSchema(
       .index("by_work_order", ["workOrderId"])
       .index("by_author", ["authorId"])
       .index("by_work_order_time", ["workOrderId", "createdAt"]),
+      
+    // Contractors table (contractor organizations)
+    contractors: defineTable({
+      tenantId: v.id("tenants"),
+      name: v.string(),
+      description: v.optional(v.string()),
+      contactName: v.optional(v.string()),
+      contactEmail: v.optional(v.string()),
+      contactPhone: v.optional(v.string()),
+      address: v.optional(v.string()),
+      specialties: v.optional(v.array(v.string())),
+      status: v.string(), // "active", "inactive", "suspended"
+      tags: v.optional(v.array(v.string())),
+      reviews: v.optional(v.array(v.object({
+        reviewerId: v.id("users"),
+        rating: v.number(), // 1-5 rating
+        comment: v.optional(v.string()),
+        createdAt: v.number(),
+      }))),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_tenant_status", ["tenantId", "status"]),
+      
+    // Contractor Profiles table (individual contractor employees/workers)
+    contractorProfiles: defineTable({
+      contractorId: v.id("contractors"),
+      name: v.string(),
+      email: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      role: v.optional(v.string()),
+      specialties: v.optional(v.array(v.string())),
+      certifications: v.optional(v.array(v.string())),
+      status: v.string(), // "active", "inactive"
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_contractor", ["contractorId"])
+      .index("by_email", ["email"]),
+      
+    // Contractor Assignments table (linking contractors to work orders)
+    contractorAssignments: defineTable({
+      contractorId: v.id("contractors"),
+      contractorProfileId: v.optional(v.id("contractorProfiles")),
+      workOrderId: v.id("workOrders"),
+      projectId: v.optional(v.id("projects")),
+      startDate: v.optional(v.number()),
+      endDate: v.optional(v.number()),
+      status: v.string(), // "scheduled", "in_progress", "completed", "cancelled"
+      notes: v.optional(v.string()),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_contractor", ["contractorId"])
+      .index("by_contractor_profile", ["contractorProfileId"])
+      .index("by_work_order", ["workOrderId"])
+      .index("by_project", ["projectId"]),
   },
   {
     schemaValidation: false,

@@ -36,6 +36,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { useWorksites } from "@/lib/atoms";
+import { Separator } from "@/components/ui/separator";
+import { Id } from "@/../../../packages/backend/convex/_generated/dataModel";
 
 interface TagInputProps {
   tags: string[];
@@ -105,6 +107,8 @@ export default function NewProjectPage() {
   const { toast } = useToast();
   const tenantId = useTenantId();
   const createProject = useMutation(api.projects.createProject);
+  const assignContractor = useMutation(api.contractors.assignContractorToWorkOrder);
+  const createWorkOrder = useMutation(api.workorders.createWorkOrder);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -114,7 +118,7 @@ export default function NewProjectPage() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [budget, setBudget] = useState<string>("");
   const [managerId, setManagerId] = useState<string>("");
-  const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  const [teamMembers, setTeamMembers] = useState<Id<"users">[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [worksiteId, setWorksiteId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,54 +133,92 @@ export default function NewProjectPage() {
     tenantId ? { tenantId } : "skip",
   );
 
+  // Get contractors in the tenant 
+  const contractors = useQuery(
+    api.contractors.getContractors,
+    tenantId ? { 
+      tenantId,
+      status: "active" 
+    } : "skip"
+  );
+
+  // Contractor assignment
+  const [contractorId, setContractorId] = useState<Id<"contractors"> | null>(null);
+  const [contractorAssignmentStatus, setContractorAssignmentStatus] = useState("scheduled");
+  const [contractorNotes, setContractorNotes] = useState("");
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     if (!tenantId) {
-      setError("No tenant selected");
+      toast({
+        title: "Error",
+        description: "No tenant selected",
+        variant: "destructive",
+      });
       return;
     }
-
+    
     if (!name) {
-      setError("Name is required");
+      setError("Project name is required");
       return;
     }
-
-    setIsSubmitting(true);
-    setError("");
-
+    
     try {
-      await createProject({
+      setIsSubmitting(true);
+      setError("");
+      
+      const projectId = await createProject({
         tenantId,
         name,
         description: description || undefined,
-        worksiteId: worksiteId ? (worksiteId as any) : undefined,
+        worksiteId: worksiteId ? worksiteId as Id<"worksites"> : undefined,
         status,
         priority,
         startDate: startDate ? startDate.getTime() : undefined,
         endDate: endDate ? endDate.getTime() : undefined,
         budget: budget ? parseFloat(budget) : undefined,
-        managerId: managerId ? (managerId as any) : undefined,
-        teamMembers:
-          teamMembers.length > 0 ? (teamMembers as any[]) : undefined,
+        managerId: managerId ? managerId as Id<"users"> : undefined,
+        teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
-
+      
+      // If contractor is selected, create an assignment
+      if (contractorId && projectId) {
+        // Create a dummy work order for the project since contractor assignments require a work order
+        const workOrderId = await createWorkOrder({
+          tenantId,
+          title: `Project: ${name}`,
+          description: `Contractor assignment for project: ${name}`,
+          status: "open",
+          priority,
+          type: "other",
+          projectId,
+          startDate: startDate ? startDate.getTime() : undefined,
+          dueDate: endDate ? endDate.getTime() : undefined,
+        });
+        
+        // Now create the contractor assignment
+        await assignContractor({
+          contractorId,
+          workOrderId,
+          projectId,
+          startDate: startDate ? startDate.getTime() : undefined,
+          endDate: endDate ? endDate.getTime() : undefined,
+          status: contractorAssignmentStatus,
+          notes: contractorNotes || undefined,
+        });
+      }
+      
       toast({
-        title: "Project created",
-        description: "Your project has been created successfully",
+        title: "Success",
+        description: "Project created successfully",
       });
-
-      // Redirect to projects list
+      
       router.push("/projects");
-    } catch (err: unknown) {
-      console.error("Failed to create project:", err);
-      setError(err instanceof Error ? err.message : "Failed to create project");
-      toast({
-        title: "Error",
-        description: "Failed to create project",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error creating project:", err);
+      setError("Failed to create project. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -380,6 +422,61 @@ export default function NewProjectPage() {
             <div>
               <Label htmlFor="tags">Tags</Label>
               <TagInput tags={tags} onChange={setTags} />
+            </div>
+
+            <Separator className="my-8" />
+            <h2 className="text-xl font-semibold mb-4">Contractor Assignment</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contractor">Contractor</Label>
+                <Select 
+                  value={contractorId?.toString() || ""} 
+                  onValueChange={(value) => setContractorId(value ? value as Id<"contractors"> : null)}
+                >
+                  <SelectTrigger id="contractor">
+                    <SelectValue placeholder="Select a contractor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {contractors?.map((contractor) => (
+                      <SelectItem key={contractor._id} value={contractor._id}>
+                        {contractor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contractor-status">Assignment Status</Label>
+                <Select 
+                  value={contractorAssignmentStatus} 
+                  onValueChange={setContractorAssignmentStatus}
+                  disabled={!contractorId}
+                >
+                  <SelectTrigger id="contractor-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="contractor-notes">Notes for Contractor</Label>
+                <Textarea
+                  id="contractor-notes"
+                  value={contractorNotes}
+                  onChange={(e) => setContractorNotes(e.target.value)}
+                  placeholder="Add notes or instructions for the contractor..."
+                  rows={3}
+                  disabled={!contractorId}
+                />
+              </div>
             </div>
           </CardContent>
 

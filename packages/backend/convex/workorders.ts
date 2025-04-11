@@ -463,4 +463,59 @@ export const getWorkOrderComments = query({
       .order("asc")
       .collect();
   },
+});
+
+/**
+ * Get contractors assigned to a work order
+ */
+export const getWorkOrderContractors = query({
+  args: {
+    workOrderId: v.id("workOrders"),
+  },
+  handler: async (ctx, args) => {
+    const workOrder = await ctx.db.get(args.workOrderId);
+    if (!workOrder) {
+      throw new Error("Work order not found");
+    }
+    
+    // Check if user is in tenant
+    await checkUserInTenant(ctx, workOrder.tenantId);
+    
+    // Get all assignments for this work order
+    const assignments = await ctx.db
+      .query("contractorAssignments")
+      .withIndex("by_work_order", (q: any) => q.eq("workOrderId", args.workOrderId))
+      .collect();
+    
+    // Get unique contractor IDs from assignments
+    const contractorIds = [...new Set(assignments.map(a => a.contractorId))];
+    
+    // Fetch the contractor details
+    const contractors = await Promise.all(
+      contractorIds.map(id => ctx.db.get(id))
+    );
+    
+    // Get the profile IDs and details for each assignment
+    const profileDetails = await Promise.all(
+      assignments
+        .filter(a => a.contractorProfileId)
+        .map(async a => {
+          const profile = await ctx.db.get(a.contractorProfileId!);
+          return {
+            assignmentId: a._id,
+            profile,
+            startDate: a.startDate,
+            endDate: a.endDate,
+            status: a.status || "",
+            notes: a.notes || "",
+          };
+        })
+    );
+    
+    // Return both contractors and their profiles assigned to this work order
+    return {
+      contractors: contractors.filter(Boolean),
+      assignedProfiles: profileDetails.filter(p => p.profile !== null),
+    };
+  },
 }); 

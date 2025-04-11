@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as assets from "../assets.js";
+import type * as contractors from "../contractors.js";
 import type * as geofences from "../geofences.js";
 import type * as incidents from "../incidents.js";
 import type * as notes from "../notes.js";
@@ -38,6 +39,7 @@ import type * as worksites from "../worksites.js";
  */
 declare const fullApi: ApiFromModules<{
   assets: typeof assets;
+  contractors: typeof contractors;
   geofences: typeof geofences;
   incidents: typeof incidents;
   notes: typeof notes;

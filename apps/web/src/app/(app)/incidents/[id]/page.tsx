@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { MapView } from "@/components/map/MapView";
 
 // Define types for incident and tenant member
 interface Incident {
@@ -326,7 +327,7 @@ export default function IncidentDetailsPage() {
               </Link>
             </Button>
             <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-              <DialogTrigger asChild>
+              <DialogTrigger>
                 <Button>
                   <Edit className="mr-2 h-4 w-4" />
                   Update Incident
@@ -457,12 +458,10 @@ export default function IncidentDetailsPage() {
               
               {/* Map placeholder - would be a real map in production */}
               <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-                  <p className="text-gray-500">
-                    Map View - Location of the incident
-                  </p>
-                </div>
+              
+              <MapView
+                zoom={15}
+              />
               </div>
             </CardContent>
           </Card>

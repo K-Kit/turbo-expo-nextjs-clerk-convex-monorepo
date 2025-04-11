@@ -88,7 +88,7 @@ export default function Dashboard() {
             {greeting}, {user?.firstName || "there"}
           </h1>
           <p className="text-gray-600 mt-2">
-            Welcome to your GeoFence Pro dashboard. Here's an overview of your
+            Welcome to your Worksafe Maps dashboard. Here's an overview of your
             account.
           </p>
         </div>

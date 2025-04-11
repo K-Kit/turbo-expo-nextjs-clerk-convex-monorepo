@@ -162,6 +162,7 @@ export default function NewWorkOrderPage() {
   const { toast } = useToast();
   const tenantId = useTenantId();
   const createWorkOrder = useMutation(api.workorders.createWorkOrder);
+  const assignContractor = useMutation(api.contractors.assignContractorToWorkOrder);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -178,6 +179,12 @@ export default function NewWorkOrderPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [estimatedHours, setEstimatedHours] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
+  
+  // Contractor assignment
+  const [contractorId, setContractorId] = useState<Id<"contractors"> | null>(null);
+  const [contractorProfileId, setContractorProfileId] = useState<Id<"contractorProfiles"> | null>(null);
+  const [contractorAssignmentStatus, setContractorAssignmentStatus] = useState("scheduled");
+  const [contractorNotes, setContractorNotes] = useState("");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -200,24 +207,43 @@ export default function NewWorkOrderPage() {
     tenantId ? { tenantId } : "skip"
   );
   
+  // Get contractors in the tenant 
+  const contractors = useQuery(
+    api.contractors.getContractors,
+    tenantId ? { 
+      tenantId,
+      status: "active" 
+    } : "skip"
+  );
+  
+  // Get contractor profiles if a contractor is selected
+  const contractorProfiles = useQuery(
+    api.contractors.getContractorProfiles,
+    contractorId ? { contractorId } : "skip"
+  );
+  
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!tenantId) {
-      setError("No tenant selected");
+      toast({
+        title: "Error",
+        description: "No tenant selected",
+        variant: "destructive",
+      });
       return;
     }
     
     if (!title) {
-      setError("Title is required");
+      setError("Work order title is required");
       return;
     }
     
-    setIsSubmitting(true);
-    setError("");
-    
     try {
-      await createWorkOrder({
+      setIsSubmitting(true);
+      setError("");
+      
+      const workOrderId = await createWorkOrder({
         tenantId,
         title,
         description: description || undefined,
@@ -235,21 +261,29 @@ export default function NewWorkOrderPage() {
         tags: tags.length > 0 ? tags : undefined,
       });
       
+      // If contractor is selected, create an assignment
+      if (contractorId && workOrderId) {
+        await assignContractor({
+          contractorId,
+          contractorProfileId: contractorProfileId || undefined,
+          workOrderId,
+          projectId: projectId || undefined,
+          startDate: startDate ? startDate.getTime() : undefined,
+          endDate: dueDate ? dueDate.getTime() : undefined,
+          status: contractorAssignmentStatus,
+          notes: contractorNotes || undefined,
+        });
+      }
+      
       toast({
-        title: "Work Order Created",
-        description: "Your work order has been created successfully",
+        title: "Success",
+        description: "Work order created successfully",
       });
       
-      // Redirect to work orders list
       router.push("/workorders");
-    } catch (err: unknown) {
-      console.error("Failed to create work order:", err);
-      setError(err instanceof Error ? err.message : "Failed to create work order");
-      toast({
-        title: "Error",
-        description: "Failed to create work order",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error creating work order:", err);
+      setError("Failed to create work order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -499,6 +533,85 @@ export default function NewWorkOrderPage() {
                   <Label>Location</Label>
                   <LocationInput location={location} onChange={setLocation} />
                 </div>
+              </div>
+            </div>
+            
+            <Separator className="my-8" />
+            <h2 className="text-xl font-semibold mb-4">Contractor Assignment</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contractor">Contractor</Label>
+                <Select 
+                  value={contractorId?.toString() || ""} 
+                  onValueChange={(value) => {
+                    setContractorId(value ? value as Id<"contractors"> : null);
+                    setContractorProfileId(null); // Reset profile when contractor changes
+                  }}
+                >
+                  <SelectTrigger id="contractor">
+                    <SelectValue placeholder="Select a contractor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {contractors?.map((contractor) => (
+                      <SelectItem key={contractor._id} value={contractor._id}>
+                        {contractor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contractor-profile">Contractor Personnel</Label>
+                <Select 
+                  value={contractorProfileId?.toString() || ""} 
+                  onValueChange={(value) => setContractorProfileId(value ? value as Id<"contractorProfiles"> : null)}
+                  disabled={!contractorId || !contractorProfiles?.length}
+                >
+                  <SelectTrigger id="contractor-profile">
+                    <SelectValue placeholder="Select contractor personnel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {contractorProfiles?.map((profile) => (
+                      <SelectItem key={profile._id} value={profile._id}>
+                        {profile.name} {profile.role ? `(${profile.role})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="contractor-status">Assignment Status</Label>
+                <Select 
+                  value={contractorAssignmentStatus} 
+                  onValueChange={setContractorAssignmentStatus}
+                  disabled={!contractorId}
+                >
+                  <SelectTrigger id="contractor-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="contractor-notes">Notes for Contractor</Label>
+                <Textarea
+                  id="contractor-notes"
+                  value={contractorNotes}
+                  onChange={(e) => setContractorNotes(e.target.value)}
+                  placeholder="Add notes or instructions for the contractor..."
+                  rows={3}
+                  disabled={!contractorId}
+                />
               </div>
             </div>
           </CardContent>

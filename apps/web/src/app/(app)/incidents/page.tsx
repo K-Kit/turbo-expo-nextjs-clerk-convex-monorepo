@@ -475,9 +475,9 @@ export default function IncidentsPage() {
                             {incident.worksite.name}
                           </Badge>
                         )}
-                        {incident.tags?.map((tag) => (
+                        {incident.tags?.map((tag, index) => (
                           <Badge
-                            key={tag}
+                            key={index}
                             variant="secondary"
                             className="flex items-center"
                           >
