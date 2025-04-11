@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
 import { Id } from '@/../../../packages/backend/convex/_generated/dataModel';
@@ -29,7 +29,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-export default function EditContractorPage({ params }: { params: { id: string } }) {
+export default function EditContractorPage() {
+  const params = useParams();
   const contractorId = params.id as Id<"contractors">;
   const router = useRouter();
   const { toast } = useToast();
