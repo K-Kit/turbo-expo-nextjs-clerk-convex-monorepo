@@ -24,6 +24,10 @@ const IncidentsScreen = ({ navigation }) => {
     tenantId ? { tenantId } : "skip"
   ) || [];
   
+  const handleReportIncident = () => {
+    navigation.navigate('ReportIncident');
+  };
+  
   const getSeverityColor = (severity) => {
     switch (severity) {
       case 'critical':
@@ -76,7 +80,10 @@ const IncidentsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Incidents</Text>
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={handleReportIncident}
+        >
           <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -88,7 +95,10 @@ const IncidentsScreen = ({ navigation }) => {
       ) : incidents.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No incidents reported</Text>
-          <TouchableOpacity style={styles.createButton}>
+          <TouchableOpacity 
+            style={styles.createButton}
+            onPress={handleReportIncident}
+          >
             <Text style={styles.createButtonText}>Report Incident</Text>
           </TouchableOpacity>
         </View>

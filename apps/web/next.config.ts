@@ -6,4 +6,15 @@ export default {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        hostname: "*.vercel.app",
+      },
+
+      {
+        hostname: "img.clerk.com",
+      },
+    ],
+  },
 };

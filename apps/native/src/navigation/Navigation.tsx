@@ -22,6 +22,12 @@ import WorksitesScreen from "../screens/WorksitesScreen";
 import IncidentsScreen from "../screens/IncidentsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 
+// Phase 3 Screens
+import ReportIncidentScreen from "../screens/ReportIncidentScreen";
+import WorkOrderScreen from "../screens/WorkOrderScreen";
+import CreateWorkOrderScreen from "../screens/CreateWorkOrderScreen";
+import WorkOrderDetailScreen from "../screens/WorkOrderDetailScreen";
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -41,6 +47,8 @@ function MainTabs() {
             iconName = focused ? 'business' : 'business-outline';
           } else if (route.name === 'Incidents') {
             iconName = focused ? 'warning' : 'warning-outline';
+          } else if (route.name === 'Work Orders') {
+            iconName = focused ? 'construct' : 'construct-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -56,6 +64,7 @@ function MainTabs() {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Worksites" component={WorksitesScreen} />
       <Tab.Screen name="Incidents" component={IncidentsScreen} />
+      <Tab.Screen name="Work Orders" component={WorkOrderScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -68,6 +77,27 @@ function NotesStack() {
       <Stack.Screen name="NotesDashboard" component={NotesDashboardScreen} />
       <Stack.Screen name="InsideNote" component={InsideNoteScreen} />
       <Stack.Screen name="CreateNote" component={CreateNoteScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Incidents navigator
+function IncidentsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="IncidentsList" component={IncidentsScreen} />
+      <Stack.Screen name="ReportIncident" component={ReportIncidentScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Work Orders navigator
+function WorkOrdersStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="WorkOrdersList" component={WorkOrderScreen} />
+      <Stack.Screen name="CreateWorkOrder" component={CreateWorkOrderScreen} />
+      <Stack.Screen name="WorkOrderDetail" component={WorkOrderDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -95,6 +125,9 @@ const Navigation = () => {
           <>
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="Notes" component={NotesStack} />
+            <Stack.Screen name="ReportIncident" component={ReportIncidentScreen} />
+            <Stack.Screen name="CreateWorkOrder" component={CreateWorkOrderScreen} />
+            <Stack.Screen name="WorkOrderDetail" component={WorkOrderDetailScreen} />
           </>
         )}
       </Stack.Navigator>

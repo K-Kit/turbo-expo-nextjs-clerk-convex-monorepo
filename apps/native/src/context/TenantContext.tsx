@@ -39,12 +39,9 @@ interface TenantProviderProps {
 export const TenantProvider = ({ children }: TenantProviderProps) => {
   const [currentTenantId, setCurrentTenantId] = useState<string | null>(null);
   const { isSignedIn } = useAuth();
-  
-  const tenants = useQuery(
-    api.tenants.list,
-    isSignedIn ? {} : "skip"
-  ) || [];
-  
+
+  const tenants = useQuery(api.tenants.list, isSignedIn ? {} : "skip") || [];
+
   const isLoading = tenants === undefined;
 
   useEffect(() => {
@@ -66,4 +63,4 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
       {children}
     </TenantContext.Provider>
   );
-}; 
+};
