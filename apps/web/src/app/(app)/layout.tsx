@@ -6,5 +6,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) {
     return <div>Not authenticated</div>;
   }
-  return <div>{children}</div>;
+  return <div className="flex flex-col h-screen overflow-x-hidden w-full">{children}</div>;
 }
