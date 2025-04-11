@@ -6,7 +6,7 @@ import { api } from "@/../../../packages/backend/convex/_generated/api";
 import { useTenantId } from "@/hooks/useTenantId";
 import { AlertTriangle, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { MapContainer, Marker, Popup, TileLayer, Tooltip } from "react-leaflet";
+// import { MapContainer, Marker, Popup, TileLayer, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
@@ -14,18 +14,31 @@ import { mapViewSettingsAtom, useWorksite, useWorksites } from "@/lib/atoms";
 import { useWorksiteId } from "@/lib/atoms";
 import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 
-function NoSSR({ children }: { children: React.ReactNode }) {
-  const [hasMounted, setHasMounted] = useState(false);
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false },
+);
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false },
+);
 
-  if (!hasMounted) return null; // This is a placeholder component - in a real implementation, you would use a proper map library
-  // like react-leaflet, Mapbox, or Google Maps
-  return <>{children}</>;
-}
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
+
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false },
+);
+
+const Tooltip = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Tooltip),
+  { ssr: false },
+);
 
 // This is a placeholder component - in a real implementation, you would use a proper map library
 // like react-leaflet, Mapbox, or Google Maps
@@ -46,27 +59,23 @@ const MapPlaceholder = ({
 }) => {
   const [lat, lng] = [37.771365, -122.417225];
   const position = { lat: center?.lat || lat, lng: center?.lng || lng };
-  return <div className={cn("w-full h-full", className)}>Map</div>;
+  // return <div className={cn("w-full h-full", className)}>Map</div>;
 
-  // // Commented out MapContainer implementation
-  // /*
-  // return (
-  //   <NoSSR>
-  //     <MapContainer
-  //       center={position}
-  //       zoom={zoom}
-  //       scrollWheelZoom={false}
-  //       className={cn("w-full h-full", className)}
-  //     >
-  //       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-  //       <Marker position={position}>
-  //         <Popup>
-  //           A pretty CSS3 popup. <br /> Easily customizable.
-  //         </Popup>
-  //       </Marker>
-  //     </MapContainer>
-  //   </NoSSR>
-  // );
+  return (
+    <MapContainer
+      center={position}
+      zoom={zoom}
+      scrollWheelZoom={false}
+      className={cn("w-full h-full", className)}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <Marker position={position}>
+          <Popup>
+            A pretty CSS3 popup. <br /> Easily customizable.
+          </Popup>
+      </Marker>
+    </MapContainer>
+  );
 };
 
 export function MapView({
