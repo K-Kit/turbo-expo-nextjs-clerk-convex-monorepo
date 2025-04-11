@@ -3,9 +3,12 @@
 import { ReactNode } from "react";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ClerkProvider, useAuth } from "@clerk/nextjs";
+import {
+  ClerkProvider,
+  useAuth,
+} from "@clerk/nextjs";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { Provider } from 'jotai'
+import { Provider } from "jotai";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -21,10 +24,10 @@ export default function ConvexClientProvider({
         <ClerkProvider
           publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}
         >
-        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          {children}
-        </ConvexProviderWithClerk>
-      </ClerkProvider>
+          <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+            {children}
+          </ConvexProviderWithClerk>
+        </ClerkProvider>
       </Provider>
     </ErrorBoundary>
   );

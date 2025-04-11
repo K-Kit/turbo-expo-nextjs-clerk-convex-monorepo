@@ -10,10 +10,14 @@ const storage = createJSONStorage(
 export const currentTenantIdAtom = atomWithStorage<Id<"tenants"> | null>(
   "currentTenantId",
   null,
+  undefined,
+  { getOnInit: true },
 );
 export const currentWorksiteIdAtom = atomWithStorage<Id<"worksites"> | null>(
   "currentWorksiteId",
   null,
+  undefined,
+  { getOnInit: true },
 );
 
 export const mapCenterAtom = atom<{ lat: number; lng: number } | null>({
