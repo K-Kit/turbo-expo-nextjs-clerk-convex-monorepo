@@ -154,6 +154,61 @@ export default defineSchema(
       .index("by_tenant", ["tenantId"])
       .index("by_invite_code", ["inviteCode"])
       .index("by_email_and_tenant", ["email", "tenantId"]),
+
+    // POIs table
+    pois: defineTable({
+      name: v.string(),
+      description: v.optional(v.string()),
+      location: v.object({
+        lat: v.number(),
+        lng: v.number(),
+      }),
+      type: v.string(), // "hazard", "safety_equipment", etc.
+      status: v.string(), // "active", "inactive", etc.
+      tenantId: v.id("tenants"),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_tenant_type", ["tenantId", "type"])
+      .index("by_tenant_status", ["tenantId", "status"]),
+
+    // Assets table
+    assets: defineTable({
+      name: v.string(),
+      description: v.optional(v.string()),
+      location: v.object({
+        lat: v.number(),
+        lng: v.number(),
+      }),
+      type: v.string(), // "vehicle", "equipment", etc.
+      status: v.string(), // "operational", "maintenance", "out_of_service"
+      tenantId: v.id("tenants"),
+      assignedTo: v.optional(v.id("users")),
+      lastUpdated: v.number(),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_tenant_type", ["tenantId", "type"])
+      .index("by_tenant_status", ["tenantId", "status"])
+      .index("by_assigned_user", ["assignedTo"]),
+
+    // Asset history table
+    assetHistory: defineTable({
+      assetId: v.id("assets"),
+      location: v.object({
+        lat: v.number(),
+        lng: v.number(),
+      }),
+      status: v.string(),
+      timestamp: v.number(),
+      updatedBy: v.id("users"),
+    })
+      .index("by_asset", ["assetId"])
+      .index("by_asset_time", ["assetId", "timestamp"]),
   },
   {
     schemaValidation: false,

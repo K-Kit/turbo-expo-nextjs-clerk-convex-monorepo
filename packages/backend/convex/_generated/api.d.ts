@@ -13,10 +13,12 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as assets from "../assets.js";
 import type * as geofences from "../geofences.js";
 import type * as incidents from "../incidents.js";
 import type * as notes from "../notes.js";
 import type * as openai from "../openai.js";
+import type * as pois from "../pois.js";
 import type * as seed from "../seed.js";
 import type * as tenants from "../tenants.js";
 import type * as users from "../users.js";
@@ -33,10 +35,12 @@ import type * as worksites from "../worksites.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  assets: typeof assets;
   geofences: typeof geofences;
   incidents: typeof incidents;
   notes: typeof notes;
   openai: typeof openai;
+  pois: typeof pois;
   seed: typeof seed;
   tenants: typeof tenants;
   users: typeof users;
