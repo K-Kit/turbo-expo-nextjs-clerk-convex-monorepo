@@ -124,13 +124,15 @@ export function MapView({
   }
 
   return (
-    <MapPlaceholder
-      items={combinedItems}
-      onItemClick={handleItemClick}
-      // height={height}
-      // center={center}
-      // zoom={zoom}
-    />
+    <div className={`w-full h-[${height}px]`}>
+      <MapPlaceholder
+        items={combinedItems}
+        onItemClick={handleItemClick}
+        height={height}
+        // center={center}
+        // zoom={zoom}
+      />
+    </div>
   );
 }
 
