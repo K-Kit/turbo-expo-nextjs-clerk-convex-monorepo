@@ -30,7 +30,7 @@ export default function Header() {
   const { user } = useUser();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
-  
+
   const navigation = user ? privateNavigation : publicNavigation;
 
   return (
@@ -45,24 +45,25 @@ export default function Header() {
                 </div>
                 <div className="sm:flex hidden flex-shrink-0 items-center">
                   <Link href="/" className="flex items-center space-x-2">
-                    <span className="text-xl font-bold text-indigo-600">GeoFence Pro</span>
+                    <Logo />
                   </Link>
                 </div>
-                
+
                 <div className="flex flex-1 items-center justify-center">
                   <div className="hidden sm:ml-6 sm:block">
                     <ul className="flex space-x-8">
                       {navigation.map((item) => {
-                        const isActive = pathname === item.href || 
+                        const isActive =
+                          pathname === item.href ||
                           (item.href !== "/" && pathname.startsWith(item.href));
-                        
+
                         return (
                           <li key={item.name}>
                             <Link
                               href={item.href}
                               className={`text-center text-base font-medium px-3 py-2 rounded-md ${
-                                isActive 
-                                  ? "bg-indigo-100 text-indigo-700" 
+                                isActive
+                                  ? "bg-indigo-100 text-indigo-700"
                                   : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                               }`}
                               aria-current={isActive ? "page" : undefined}
@@ -75,7 +76,7 @@ export default function Header() {
                     </ul>
                   </div>
                 </div>
-                
+
                 {user ? (
                   <div className="hidden sm:flex absolute inset-y-0 right-0 gap-6 items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                     <Link href="/profile">
@@ -108,7 +109,7 @@ export default function Header() {
                     </Link>
                   </div>
                 )}
-                
+
                 <div className="block sm:hidden">
                   {/* Mobile menu button*/}
                   <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
@@ -128,17 +129,18 @@ export default function Header() {
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2">
               {navigation.map((item) => {
-                const isActive = pathname === item.href || 
+                const isActive =
+                  pathname === item.href ||
                   (item.href !== "/" && pathname.startsWith(item.href));
-                
+
                 return (
                   <Disclosure.Button
                     key={item.name}
                     as={Link}
                     href={item.href}
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive 
-                        ? "bg-indigo-100 text-indigo-700" 
+                      isActive
+                        ? "bg-indigo-100 text-indigo-700"
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                     aria-current={isActive ? "page" : undefined}
@@ -147,7 +149,7 @@ export default function Header() {
                   </Disclosure.Button>
                 );
               })}
-              
+
               {user ? (
                 <div className="pt-4 pb-3 border-t border-gray-200">
                   <div className="flex items-center px-3">
@@ -159,7 +161,9 @@ export default function Header() {
                       />
                     </div>
                     <div className="ml-3">
-                      <div className="text-base font-medium text-gray-800">{user.fullName}</div>
+                      <div className="text-base font-medium text-gray-800">
+                        {user.fullName}
+                      </div>
                       <div className="text-sm font-medium text-gray-500">
                         {user.primaryEmailAddress?.emailAddress}
                       </div>
@@ -175,7 +179,7 @@ export default function Header() {
                     </Disclosure.Button>
                     <Disclosure.Button
                       as="button"
-                      onClick={() => window.location.href = "/sign-out"}
+                      onClick={() => (window.location.href = "/sign-out")}
                       className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                     >
                       Sign out

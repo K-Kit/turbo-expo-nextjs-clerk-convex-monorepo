@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Building, Edit, Users, Plus, ChevronRight, Trash2, Pencil } from "lucide-react";
 import { Id } from "@packages/backend/convex/_generated/dataModel";
+import { MapView } from "@/components/map/MapView";
 
 interface Worksite {
   _id: Id<"worksites">;
@@ -317,18 +318,7 @@ export default function WorksiteDetail() {
 
           {/* Map Placeholder - In a real app this would show a map */}
           <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Location Map</h3>
-              <div className="bg-gray-100 h-64 rounded-md flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="mx-auto h-10 w-10 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Map would be displayed here</p>
-                  <p className="text-xs text-gray-400">
-                    Lat: {worksite.coordinates.latitude}, Lng: {worksite.coordinates.longitude}
-                  </p>
-                </div>
-              </div>
-            </div>
+              <MapView />
           </div>
         </div>
         

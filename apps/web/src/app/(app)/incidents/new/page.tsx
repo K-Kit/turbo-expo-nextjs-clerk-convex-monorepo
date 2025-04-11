@@ -45,13 +45,19 @@ import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { MapView } from "@/components/map/MapView";
 
 // Form Schema
 const formSchema = z.object({
   tenantId: z.string().min(1, { message: "Organization is required" }),
   worksiteId: z.string().optional(),
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }).max(100),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
+  title: z
+    .string()
+    .min(3, { message: "Title must be at least 3 characters" })
+    .max(100),
+  description: z
+    .string()
+    .min(10, { message: "Description must be at least 10 characters" }),
   incidentType: z.string().min(1, { message: "Incident type is required" }),
   severity: z.string().min(1, { message: "Severity is required" }),
   location: z.object({
@@ -65,19 +71,19 @@ const formSchema = z.object({
 
 export default function NewIncidentPage() {
   const router = useRouter();
-  
+
   // State for map location (simulated for now)
   const [location, setLocation] = useState({
     latitude: 37.7749,
     longitude: -122.4194,
   });
-  
+
   // States
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Get list of tenants the user belongs to
   const tenants = useQuery(api.tenants.list);
-  
+
   // Setup the form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -90,46 +96,46 @@ export default function NewIncidentPage() {
       tags: [],
     },
   });
-  
+
   // Get selected tenant ID from form
   const selectedTenantId = form.watch("tenantId");
-  
+
   // Get worksites for selected tenant
   const worksites = useQuery(
     api.worksites.listByTenant,
-    selectedTenantId ? { tenantId: selectedTenantId as Id<"tenants"> } : "skip"
+    selectedTenantId ? { tenantId: selectedTenantId as Id<"tenants"> } : "skip",
   );
-  
+
   // Update location in form when it changes
   useEffect(() => {
     form.setValue("location", location);
   }, [location, form]);
-  
+
   // Set the first tenant as default when data loads
   useEffect(() => {
     if (tenants && tenants.length > 0 && !form.getValues("tenantId")) {
       form.setValue("tenantId", tenants[0]._id);
     }
   }, [tenants, form]);
-  
+
   // Mutation to create an incident
   const reportIncident = useMutation(api.incidents.reportIncident);
-  
+
   // Form submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    
+
     try {
       // Transform any values as needed
-      const occuredAt = values.occuredAt 
-        ? new Date(values.occuredAt).getTime() 
+      const occuredAt = values.occuredAt
+        ? new Date(values.occuredAt).getTime()
         : undefined;
-      
+
       // Call the mutation to create the incident
       const incidentId = await reportIncident({
         tenantId: values.tenantId as Id<"tenants">,
-        worksiteId: values.worksiteId 
-          ? (values.worksiteId as Id<"worksites">) 
+        worksiteId: values.worksiteId
+          ? (values.worksiteId as Id<"worksites">)
           : undefined,
         title: values.title,
         description: values.description,
@@ -140,10 +146,10 @@ export default function NewIncidentPage() {
         occuredAt,
         tags: values.tags,
       });
-      
+
       // Show success message
       toast.success("Incident reported successfully");
-      
+
       // Redirect to incident details page
       router.push(`/incidents/${incidentId}`);
     } catch (error) {
@@ -152,43 +158,43 @@ export default function NewIncidentPage() {
       setIsSubmitting(false);
     }
   }
-  
+
   // Reference data for dropdowns
   const incidentTypes = [
-    { value: 'injury', label: 'Injury' },
-    { value: 'near_miss', label: 'Near Miss' },
-    { value: 'hazard', label: 'Hazard' },
-    { value: 'property_damage', label: 'Property Damage' },
-    { value: 'other', label: 'Other' },
+    { value: "injury", label: "Injury" },
+    { value: "near_miss", label: "Near Miss" },
+    { value: "hazard", label: "Hazard" },
+    { value: "property_damage", label: "Property Damage" },
+    { value: "other", label: "Other" },
   ];
-  
+
   const incidentSeverities = [
-    { value: 'critical', label: 'Critical' },
-    { value: 'high', label: 'High' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'low', label: 'Low' },
+    { value: "critical", label: "Critical" },
+    { value: "high", label: "High" },
+    { value: "medium", label: "Medium" },
+    { value: "low", label: "Low" },
   ];
 
   // Simulate getting current location
   const getCurrentLocation = () => {
     // In a real app, you'd use the Geolocation API
     // navigator.geolocation.getCurrentPosition(...)
-    
+
     // For now, just generate a slight variation of the current location
     const newLocation = {
       latitude: location.latitude + (Math.random() * 0.01 - 0.005),
       longitude: location.longitude + (Math.random() * 0.01 - 0.005),
     };
-    
+
     setLocation(newLocation);
     form.setValue("location", newLocation);
     toast.success("Location updated");
   };
-  
+
   // Handle address update
   const handleAddressChange = (address: string) => {
     form.setValue("address", address);
-    
+
     // In a real app, you'd geocode this address to get coordinates
     // For now, just simulate a location change
     if (address) {
@@ -213,7 +219,7 @@ export default function NewIncidentPage() {
         <h1 className="text-3xl font-bold">Report New Incident</h1>
         <p className="text-gray-600">Document safety incidents and hazards</p>
       </div>
-      
+
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Incident Details</CardTitle>
@@ -221,7 +227,7 @@ export default function NewIncidentPage() {
             Provide detailed information about the incident or hazard
           </CardDescription>
         </CardHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
@@ -255,7 +261,7 @@ export default function NewIncidentPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Worksite Selection */}
                 <FormField
                   control={form.control}
@@ -282,14 +288,15 @@ export default function NewIncidentPage() {
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        If applicable, select the worksite where this incident occurred
+                        If applicable, select the worksite where this incident
+                        occurred
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              
+
               {/* Incident Basic Details */}
               <div>
                 <FormField
@@ -310,7 +317,7 @@ export default function NewIncidentPage() {
                   )}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Incident Type */}
                 <FormField
@@ -341,7 +348,7 @@ export default function NewIncidentPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Severity */}
                 <FormField
                   control={form.control}
@@ -361,7 +368,10 @@ export default function NewIncidentPage() {
                         </FormControl>
                         <SelectContent>
                           {incidentSeverities.map((severity) => (
-                            <SelectItem key={severity.value} value={severity.value}>
+                            <SelectItem
+                              key={severity.value}
+                              value={severity.value}
+                            >
                               {severity.label}
                             </SelectItem>
                           ))}
@@ -372,7 +382,7 @@ export default function NewIncidentPage() {
                   )}
                 />
               </div>
-              
+
               {/* Incident Description */}
               <FormField
                 control={form.control}
@@ -389,13 +399,14 @@ export default function NewIncidentPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Include what happened, any injuries, damage, or potential hazards
+                      Include what happened, any injuries, damage, or potential
+                      hazards
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Incident Date/Time */}
                 <FormField
@@ -423,7 +434,7 @@ export default function NewIncidentPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Tags (simplified for now) */}
                 <FormField
                   control={form.control}
@@ -436,7 +447,9 @@ export default function NewIncidentPage() {
                           placeholder="Enter tags separated by commas"
                           disabled={isSubmitting}
                           onChange={(e) => {
-                            const tags = e.target.value.split(",").map(tag => tag.trim());
+                            const tags = e.target.value
+                              .split(",")
+                              .map((tag) => tag.trim());
                             field.onChange(tags.filter(Boolean));
                           }}
                         />
@@ -449,14 +462,14 @@ export default function NewIncidentPage() {
                   )}
                 />
               </div>
-              
+
               {/* Location Details */}
               <div className="border rounded-lg p-4">
                 <h3 className="font-medium text-lg mb-2 flex items-center">
                   <MapPin className="h-5 w-5 mr-2 text-gray-500" />
                   Location Information
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                   {/* Address */}
                   <FormField
@@ -480,7 +493,7 @@ export default function NewIncidentPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   {/* Coordinates (Read-only display) */}
                   <div>
                     <FormLabel>Coordinates</FormLabel>
@@ -503,30 +516,25 @@ export default function NewIncidentPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Map placeholder - would be a real map in production */}
                 <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-                    <p className="text-gray-500">
-                      Map View - In a complete implementation, this would be an interactive map
-                    </p>
-                  </div>
+                  <MapView />
                 </div>
               </div>
             </CardContent>
-            
+
             <CardFooter className="flex justify-between">
-              <Button 
-                variant="outline" 
-                type="button" 
-                onClick={() => router.push('/incidents')}
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => router.push("/incidents")}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -538,4 +546,4 @@ export default function NewIncidentPage() {
       </Card>
     </div>
   );
-} 
+}

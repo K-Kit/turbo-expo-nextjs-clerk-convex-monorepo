@@ -5,9 +5,10 @@ import { api } from "@packages/backend/convex/_generated/api";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { Building2, Users, Map, Clock } from "lucide-react";
+import { Building2, Users, Map, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Id } from "@packages/backend/convex/_generated/dataModel";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -16,7 +17,16 @@ export default function Dashboard() {
 
   // Fetch tenants for the current user
   const tenants = useQuery(api.tenants.list);
-  
+  const worksites = useQuery(api.worksites.listByTenant, {
+    tenantId: tenants?.[0]._id ?? ("" as Id<"tenants">),
+  });
+  const assets = useQuery(api.assets.getAssets, {
+    tenantId: tenants?.[0]._id ?? ("" as Id<"tenants">),
+  });
+  const pois = useQuery(api.pois.getPOIs, {
+    tenantId: tenants?.[0]._id ?? ("" as Id<"tenants">),
+  });
+
   // Set greeting based on time of day
   useEffect(() => {
     const hour = new Date().getHours();
@@ -46,22 +56,22 @@ export default function Dashboard() {
       color: "bg-blue-100 text-blue-800",
     },
     {
-      name: "Active Check-ins",
-      value: "Coming soon",
-      icon: Clock,
-      href: "/check-ins",
+      name: "Total POIs",
+      value: pois?.length || 0,
+      icon: MapPin,
+      href: "/pois",
       color: "bg-green-100 text-green-800",
     },
     {
       name: "Total Worksites",
-      value: "Coming soon",
+      value: worksites?.length || 0,
       icon: Map,
       href: "/worksites",
       color: "bg-purple-100 text-purple-800",
     },
     {
       name: "Team Members",
-      value: "Coming soon",
+      value: assets?.length || 0,
       icon: Users,
       href: "/team",
       color: "bg-orange-100 text-orange-800",
@@ -71,14 +81,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             {greeting}, {user?.firstName || "there"}
           </h1>
           <p className="text-gray-600 mt-2">
-            Welcome to your GeoFence Pro dashboard. Here's an overview of your account.
+            Welcome to your GeoFence Pro dashboard. Here's an overview of your
+            account.
           </p>
         </div>
 
@@ -122,11 +133,15 @@ export default function Dashboard() {
                   <div key={tenant._id} className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900">{tenant.name}</h3>
-                        <p className="text-sm text-gray-500">Role: {tenant.role}</p>
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {tenant.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Role: {tenant.role}
+                        </p>
                       </div>
-                      <Link 
-                        href={`/tenants/${tenant._id}`} 
+                      <Link
+                        href={`/tenants/${tenant._id}`}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         View details
@@ -139,8 +154,8 @@ export default function Dashboard() {
               <div className="px-6 py-12 text-center">
                 <p className="text-gray-500">No recent activity found</p>
                 <div className="mt-6">
-                  <Link 
-                    href="/tenants/create" 
+                  <Link
+                    href="/tenants/create"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     Create your first tenant
@@ -153,4 +168,4 @@ export default function Dashboard() {
       </main>
     </div>
   );
-} 
+}
