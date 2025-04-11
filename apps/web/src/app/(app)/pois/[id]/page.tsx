@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { Usable, use, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../../../packages/backend/convex/_generated/api";
@@ -25,11 +25,13 @@ import { useToast } from "@/hooks/use-toast";
 import { MapView } from "@/components/map/MapView";
 import { Id } from "@packages/backend/convex/_generated/dataModel";
 
-export default function POIDetailPage({ params }) {
+export default function POIDetailPage(props: {
+  params: Usable<{ id: string }>;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-  const { id } = use(params);
+  const { id } = use(props.params);
   // Convert string ID to Convex ID
   const poiId = id as Id<"pois">;
 
@@ -179,7 +181,6 @@ export default function POIDetailPage({ params }) {
                   showPOIs={true}
                   showAssets={false}
                   center={poi.location}
-                  zoom={15}
                 />
               </CardContent>
             </Card>

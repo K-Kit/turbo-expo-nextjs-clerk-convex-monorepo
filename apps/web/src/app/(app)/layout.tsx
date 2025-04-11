@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
+        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none pb-12 py-8">
           {children}
         </main>
         

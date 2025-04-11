@@ -191,7 +191,7 @@ export default function MapPage() {
           </Card>
         </div>
         
-        <div className="md:col-span-3">
+        <div className="md:col-span-3 col-span-1 h-full min-h-[600px]">
           <MapView 
             showPOIs={showPOIs} 
             showAssets={showAssets}

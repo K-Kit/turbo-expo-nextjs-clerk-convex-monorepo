@@ -166,7 +166,7 @@ export default function TenantDetail() {
 
   const handleCancelInvite = async (inviteId: string) => {
     try {
-      await cancelInvite({ inviteId });
+      await cancelInvite({ inviteId: inviteId as Id<"pendingInvites"> });
       toast({
         title: "Invitation canceled",
         description: "The invitation has been canceled.",
@@ -800,7 +800,7 @@ export default function TenantDetail() {
                                 {tenant.userRole === "admin" && (
                                   <button
                                     onClick={() =>
-                                      handleRemoveUser(
+                                      handleCancelInvite(
                                         invite._id as unknown as Id<"users">,
                                       )
                                     }

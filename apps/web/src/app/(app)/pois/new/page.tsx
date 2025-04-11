@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { MapView } from "@/components/map/MapView";
 
 interface Coordinates {
   lat: number;
@@ -187,9 +188,11 @@ export default function NewPOIPage() {
             <div>
               <Label>Location</Label>
               <CoordinatePicker value={location} onChange={setLocation} />
-              <p className="text-xs text-gray-500 mt-1">
-                In a real application, this would be a map picker component
-              </p>
+              <MapView
+                center={location}
+                zoom={15}
+                height={300}
+              />
             </div>
           </CardContent>
           

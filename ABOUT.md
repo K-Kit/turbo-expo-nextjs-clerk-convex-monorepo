@@ -1,10 +1,19 @@
-Below is an example of a comprehensive README document for the Multi-Tenant WorkSafeMaps Platform Backend and Integration. You can use this as your starting point and customize it to your project’s specific needs.
+Below is the updated README document that now includes a comprehensive **Notifications** module. In this system, notifications may be attached to most entities (POI, asset, project, work order, etc.) and support scheduling multiple reminder times with messages. Notifications can be assigned to multiple people and set as repeatable.
 
 ---
 
 # Multi-Tenant WorkSafeMaps Platform
 
-This project builds a multi-tenant map-based safety and operations platform. The backend leverages Convex for persistent state management and real-time updates, while the frontend is built with Next.js and React. The system is inspired by worksafemaps.com and includes features like multi-tenant support, worksite management, incident reporting, team management, assets and POI tracking, alerts, and project management.
+This project builds a multi-tenant map-based safety and operations platform within a Turborepo monorepo. The repository consists of:
+
+- **Backend (/packages/backend):**  
+  Convex functions implement persistent state management, real-time updates, and server-side logic.
+- **Web (/apps/web):**  
+  A Next.js application provides a comprehensive web UI for managing worksites, incidents, projects, work orders, contractor management, notifications, and more.
+- **Native (/apps/native):**  
+  An Expo-powered mobile app delivers native functionality for operations and real-time data access on the go.
+
+Inspired by worksafemaps.com, the platform supports multi-tenant worksite management, incident reporting, team management, asset & POI tracking, alerts, projects, work orders, contractor management, and now an integrated notifications module.
 
 ---
 
@@ -12,14 +21,16 @@ This project builds a multi-tenant map-based safety and operations platform. The
 
 - [Project Overview](#project-overview)
 - [Key Features](#key-features)
+- [Monorepo Structure](#monorepo-structure)
 - [Application Architecture](#application-architecture)
 - [Backend Implementation (Convex)](#backend-implementation-convex)
   - [Schema (schema.ts)](#schema-schemat)
   - [RBAC and Tenant Isolation](#rbac-and-tenant-isolation)
   - [Queries & Mutations](#queries--mutations)
-- [Frontend Integration (Next.js & React)](#frontend-integration-nextjs--react)
-  - [Tenant Context Switching](#tenant-context-switching)
-  - [Map Component and Real-time Updates](#map-component-and-real-time-updates)
+- [Frontend Integration](#frontend-integration)
+  - [Web Application (Next.js)](#web-application-nextjs)
+  - [Native Mobile Application (Expo)](#native-mobile-application-expo)
+  - [Tenant Context, Real-Time Updates & Notifications Integration](#tenant-context-real-time-updates--notifications-integration)
 - [Integration Flow](#integration-flow)
 - [Getting Started](#getting-started)
 - [Notes](#notes)
@@ -29,93 +40,62 @@ This project builds a multi-tenant map-based safety and operations platform. The
 
 ## Project Overview
 
-The **Multi-Tenant WorkSafeMaps Platform** is an integrated system to enable multiple organizations (tenants) to manage safety, operations, and worksite activities through a map-based interface. Key functionalities include:
+The **Multi-Tenant WorkSafeMaps Platform** is an integrated solution enabling multiple organizations (tenants) to manage safety, operations, and worksite activities using an interactive map interface. Key functionalities include:
 
-- **Multi-Tenant Architecture**: Supporting isolated scopes per organization.
-- **Worksite and Incident Management**: Define geographic worksites, manage incident reporting, and track related assets and activities.
-- **Team & User Management**: Role-based access across teams and tenants for effective collaboration.
-- **Alerts and Projects**: Create and manage alerts on specific events and track projects across worksites.
-- **Interactive Mapping**: A feature-rich map component displaying layered data with real-time updates.
+- **Multi-Tenant Architecture:**  
+  Isolated data scopes for each organization.
+- **Worksite & Incident Management:**  
+  Define geographic worksites, report incidents, and track related assets.
+- **Team & User Management:**  
+  Role-based access across teams and tenants.
+- **Asset & POI Management:**  
+  Track assets and designate points of interest.
+- **Alerts:**  
+  Configure and trigger alerts based on incidents or asset status changes.
+- **Project & Work Order Management:**  
+  Organize projects linked to worksites and manage work orders that can be assigned to assets, teams, or individuals.
+- **Contractor Management:**  
+  Manage contractor organizations and individual profiles, associating contractor work with projects and work orders.
+- **Notifications Module:**  
+  Attach notifications to various entities (e.g., POI, asset, project, work order). Schedule one or more reminder times with custom messages. Notifications can be assigned to multiple individuals and set as repeatable.
+- **Real-Time Updates & Interactive Mapping:**  
+  Instant updates driven by Convex, with interactive maps across platforms (web and native) displaying multiple data layers.
 
 ---
 
-## Key Features
+## Monorepo Structure
 
-- **Multi-Tenant Architecture**
-  - Data isolation across organizations.
-  - Users can belong to multiple tenants with different roles.
+This project uses a Turborepo monorepo to streamline development and shared tooling across different parts of the system. The main directories are:
 
-- **Worksite Management**
-  - Define worksites with geospatial data (points and boundaries).
-  - Associate teams and safety protocols with worksites.
+```plaintext
+/packages
+  /backend        # Convex backend functions and schema
+/apps
+  /web            # Next.js application for web interface
+  /native         # Expo application for native mobile experience
+```
 
-- **Incident Reporting**
-  - Authenticated users can report and manage incidents.
-  - Incident details include location, description, type, timestamp, and possible asset associations.
-
-- **Team & User Management**
-  - Invite and assign users to tenants or teams.
-  - Role-based access control at both tenant and team levels.
-
-- **Asset, POI, Alerts & Project Management**
-  - Track assets with location and status information.
-  - Define points of interest that include hazards or safety equipment.
-  - Configure and trigger alerts based on incident reports or geofence breaches.
-  - Create projects linked to worksites, assign teams, and monitor statuses.
-
-- **Real-Time Updates**
-  - Automatic updates of incident reports and asset details using Convex’s real-time features.
-
-- **Interactive Map Display**
-  - Map interface (using React Leaflet or similar) with integrated data layers to control the display of worksites, incidents, teams, assets, and POIs.
+This structure promotes code reuse and simplifies dependency management across backend and front-end applications.
 
 ---
 
 ## Application Architecture
 
-The system is structured into two main segments:
+The system is built around a clear separation of concerns:
 
-1. **Convex Backend**:  
-   - Holds a comprehensive multi-tenant schema.
-   - Implements queries and mutations (separated into function files like tenants.ts, worksites.ts, incidents.ts, etc.).
-   - Enforces role-based access control (RBAC) and tenant-based data isolation.
+1. **Convex Backend (/packages/backend):**  
+   - Hosts the multi-tenant schema including collections for tenants, worksites, teams, incidents, assets, POIs, alerts, projects, work orders, contractors, and now notifications.
+   - Organizes functions into modular files (e.g., tenants.ts, worksites.ts, incidents.ts, projects.ts, workorders.ts, contractors.ts, notifications.ts).
+   - Enforces RBAC and tenant-based isolation.
 
-2. **Next.js Frontend**:  
-   - Integrates Convex using hooks (`useQuery`, `useMutation`).
-   - Manages tenant context and UI components (worksites, incidents, teams, assets, alerts, projects, etc.).
-   - Renders an interactive map enriched with real-time data updates.
+2. **Next.js Web Application (/apps/web):**  
+   - Connects to the Convex backend using hooks (`useQuery`, `useMutation`).
+   - Provides UI components for managing all aspects of the platform: worksites, incidents, projects, work orders, contractor management, and notifications.
+   - Displays an interactive, real-time map.
 
-Below is a simplified Mermaid diagram illustrating the high-level architecture:
-
-```mermaid
-flowchart TD
-    A[Multi-Tenant WorkSafeMaps Platform]
-    B[Convex Backend (schema.ts)]
-    C[Frontend (Next.js, React)]
-    D[Multi-Tenant Schema]
-    E[User Authentication (Convex Auth)]
-    F[RBAC / Tenant Isolation]
-    G[Worksite Management]
-    H[Incident Reporting]
-    I[Team & User Management]
-    J[Asset Tracking & POIs]
-    K[Alerts & Projects]
-    L[Enhanced Interactive Map]
-    M[Real-time Updates]
-
-    A --> B
-    A --> C
-    B --> D
-    B --> E
-    B --> F
-    D --> G
-    D --> H
-    D --> I
-    D --> J
-    D --> K
-    C --> L
-    C --> M
-```
+3. **Expo Native Application (/apps/native):**  
+   - Offers mobile-friendly access to operational data.
+   - Mirrors core functionalities from the web app to support on-the-go operations and to manage notifications and other real-time updates.
 
 ---
 
@@ -123,125 +103,132 @@ flowchart TD
 
 ### Schema (schema.ts)
 
-The Convex schema defines the following collections:
+The Convex schema defines several collections, now including notifications:
 
-- **tenants**  
-  Stores tenant organization details.
+- **tenants:** Stores tenant organization details.
+- **userTenantMemberships:** Links users to tenants with role information.
+- **worksites:** Contains geospatial and descriptive worksite data.
+- **teams:** Manages team details for each tenant.
+- **teamMemberships:** Maps users to teams.
+- **incidents:** Tracks incident reports with details and geolocation.
+- **assets:** Stores asset-related data (location, type, status).
+- **pois:** Records points of interest (hazards, safety equipment markers).
+- **alerts:** Manages alert rules and triggers.
+- **projects:** Holds project-related information linked with worksites.
+- **workOrders:** Captures work orders linked to projects, assets, teams, and individuals.
+- **contractors:** Manages contractor organizations and profiles.
+- **notifications:**  
+  - Stores notifications that can attach to multiple entities such as POI, asset, project, or work order.
+  - Includes fields for one or more reminder times, a custom message, repeatability flag, and assignments to multiple people.
+  - Supports linking with various entities via foreign keys or reference IDs to enable contextual notifications.
 
-- **userTenantMemberships**  
-  Links users to tenants along with their roles.
-
-- **worksites**  
-  Stores geographic and descriptive information about worksites (linked to tenantId).
-
-- **teams**  
-  Manages team details for each tenant.
-
-- **teamMemberships**  
-  Maps users to teams, including in-team roles and related worksite assignments.
-
-- **incidents**  
-  Tracks incident reports including geolocation, description, type, and associated users/assets.
-
-- **assets**  
-  Contains data on equipment or vehicles with location, type and status.
-
-- **pois**  
-  Records points of interest such as hazards or safety equipment markers.
-
-- **alerts**  
-  Manages alert rules and triggers linked to incidents or asset-related changes.
-
-- **projects**  
-  Maintains project-related information optionally connected to worksites.
-
-*Indexes and relation considerations:*  
-Key indexes (especially on tenantId) are defined for faster queries. Data integrity, including conceptual foreign key relationships, is enforced through access control in the Convex functions.
+*Indexes and Relationships:*  
+Key indexes (e.g., tenantId and foreign keys for linking notifications to other modules) ensure efficient queries. Data integrity is enforced by access control checks within each Convex function.
 
 ### RBAC and Tenant Isolation
 
-- **User Context:** All Convex functions obtain the authenticated user's identity via `ctx.auth.getUserIdentity()`.
-- **Permissions:** Every function first checks that the user is a member of the tenant and verifies the role (from `userTenantMemberships` or `teamMemberships`).
-- **Isolation:** Queries and mutations never return data outside of the user's permitted tenant context.
+- **User Context:**  
+  All functions retrieve user information via `ctx.auth.getUserIdentity()`.
+- **Permissions:**  
+  Every function confirms that the user belongs to the current tenant (via `userTenantMemberships` or `teamMemberships`) and verifies role-based access.
+- **Isolation:**  
+  Tenant-based isolation guarantees users can access only the data permitted within their tenant.
 
 ### Queries & Mutations
 
-Functions are organized into multiple files, each handling relevant domain logic:
+Functions are organized into multiple files, each handling domain-specific logic. New functions for notifications are added in `notifications.ts`.
 
 - **tenants.ts:**  
-  - `getMyTenants`  
-  - `createTenant` (with access restrictions)  
+  - `getMyTenants`
+  - `createTenant`
   - `inviteUserToTenant`
-
 - **worksites.ts:**  
-  - `getWorksites`  
-  - `createWorksite`  
+  - `getWorksites`
+  - `createWorksite`
   - `updateWorksite`
-
 - **incidents.ts:**  
-  - `getIncidentsForWorksite`  
+  - `getIncidentsForWorksite`
   - `addIncident`
-
 - **users.ts / teamManagement.ts:**  
-  - `getTeamMembers`  
-  - `addUserToTeam`  
+  - `getTeamMembers`
+  - `addUserToTeam`
   - `updateUserRole`
-
 - **assets.ts:**  
-  - `getAssets`  
+  - `getAssets`
   - `updateAssetStatus`
+- **pois.ts, alerts.ts:**  
+  - Tenant-scoped functions to manage POIs and alerts.
+- **projects.ts:**  
+  - `getProjects`
+  - `createProject`
+  - `updateProject`
+- **workorders.ts:**  
+  - `getWorkOrders`
+  - `createWorkOrder`
+  - `updateWorkOrderStatus`
+- **contractors.ts:**  
+  - `getContractors`
+  - `createContractor`
+  - `updateContractor`
+  - `assignContractorToWorkOrder`
+- **notifications.ts:**  
+  - `getNotifications` – Retrieve notifications for a given entity.
+  - `createNotification` – Create a notification with one or more reminder times, message, repeatable option, and assignments to multiple users.
+  - `updateNotification` – Modify an existing notification (e.g., update schedule or message).
 
-- **pois.ts, alerts.ts, projects.ts:**  
-  - Similar tenant-scoped functions to manage respective data.
-
-Each function enforces tenant-based access ensuring strict isolation and proper RBAC.
+Every function strictly enforces tenant-scoped data access and RBAC.
 
 ---
 
-## Frontend Integration (Next.js & React)
+## Frontend Integration
 
-### Tenant Context Switching
+### Web Application (Next.js)
 
-- **UI Mechanism:**  
-  Users belonging to multiple tenants can select an active tenant context.
-- **Context Updates:**  
-  Once set, all data fetching, mutations, and UI components will reference the currently selected tenant.
-- **Implementation:**  
-  Use Next.js client components with context hooks (e.g., `useLoggedInUser` from `lib/BackendContext`) to drive tenant-specific logic.
-
-### Map Component and Real-time Updates
-
+- **Location:** `/apps/web`
+- **Integration:**  
+  Uses Convex hooks (`useQuery`, `useMutation`) to connect with backend functions.
+- **Features:**  
+  Provides comprehensive UI for managing all entities, including worksites, incidents, assets, alerts, projects, work orders, contractor profiles, and notifications.
 - **Interactive Map:**  
-  Utilizes react-leaflet (or a similar tool) to display data layers:
-  - Worksites
-  - Incidents
-  - Assets
-  - POIs
-- **Real-Time Sync:**  
-  Uses Convex's real-time capabilities to update data instantly across the platform.
-- **Layer Management:**  
-  The map component dynamically reads the tenant context and permissions, ensuring that only authorized data is displayed.
+  Implements dynamic map layers (via React Leaflet or similar) displaying real-time updates for all modules.
+
+### Native Mobile Application (Expo)
+
+- **Location:** `/apps/native`
+- **Purpose:**  
+  Delivers mobile-friendly access to platform data including notifications, ensuring users receive timely reminders on the go.
+- **Features:**  
+  Core functionality mirrors that of the web app, incorporating mobile-specific navigation and responsive components.
+
+### Tenant Context, Real-Time Updates & Notifications Integration
+
+- **Tenant Context Switching:**  
+  Users can switch between tenants if they have access to multiple organizations; all queries and mutations use the currently selected tenant.
+- **Real-Time Updates:**  
+  Leveraging Convex’s real-time features, updates across incidents, projects, work orders, contractor assignments, and notifications are immediately visible.
+- **Notifications UI:**  
+  - Allows users to view notifications attached to various entities.
+  - Offers interfaces for creating notifications with multiple reminder times, custom messages, repeatable schedules, and multi-user assignments.
 
 ---
 
 ## Integration Flow
 
 1. **Authentication:**  
-   User signs in using the pre-configured Convex Auth system.
-
+   Users sign in using the pre-configured Convex Auth system.
+   
 2. **Tenant Selection:**  
-   Once logged in, the user selects their active tenant context. This choice governs all subsequent queries and mutations.
-
+   Once logged in, users choose an active tenant, which governs all backend queries and mutations.
+   
 3. **Data Interaction:**  
-   - The frontend uses hooks (e.g., `useQuery` & `useMutation`) to fetch or modify data.
-   - Data is fetched from Convex based on tenant membership and user roles.
-   - User actions (e.g., creating a worksite, reporting an incident) invoke Convex functions with RBAC checks.
-
+   - Both web and native apps use hooks (`useQuery`, `useMutation`) to fetch tenant-scoped data.
+   - Actions such as creating a worksite, reporting an incident, or setting a notification invoke Convex functions with RBAC checks.
+   
 4. **Real-Time Updates:**  
-   Whenever data is updated (like an incident report or asset status change), all connected clients within the tenant receive updates in real-time.
-
+   Data (incidents, asset statuses, projects, work orders, contractor assignments, and notifications) is synchronized in real time across the system.
+   
 5. **Map Display:**  
-   The interactive map displays current data layers and supports additional user interactions like geofencing and layer toggling.
+   Interactive maps in both web and native apps display real-time layers of worksites, incidents, projects, work orders, and contextual notifications.
 
 ---
 
@@ -254,49 +241,70 @@ Each function enforces tenant-based access ensuring strict isolation and proper 
    cd worksafemaps-platform
    ```
 
-2. **Setup Convex Backend:**
-   - Install dependencies.
-   - Define your Convex deployment settings.
-   - Update the `convex/schema.ts` as needed.
-   - Deploy the Convex functions.
+2. **Install Dependencies:**
 
-3. **Setup Frontend:**
-   - Install dependencies with `npm install` or `yarn install`.
-   - Configure environment settings for Convex in Next.js.
-   - Run the development server with `npm run dev` or `yarn dev`.
+   From the root directory (Turborepo), install dependencies for all packages and apps:
 
-4. **Authentication:**
-   - Leverage the pre-configured Convex Auth system to sign in.
-   - Ensure that the authentication flow integrates with your tenant context switching mechanism.
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-5. **Usage:**
-   - Once logged in and tenant is selected, navigate through the UI components to manage worksites, incidents, alerts, assets, teams, etc.
-   - Interact with the map to view real-time data layers.
+3. **Setup Convex Backend:**
+
+   - Navigate to `/packages/backend`.
+   - Configure your Convex deployment settings.
+   - Update `convex/schema.ts` to include collections for projects, work orders, contractors, and notifications.
+   - Deploy Convex functions using your preferred deployment commands.
+
+4. **Setup Web Application:**
+
+   - Go to `/apps/web`.
+   - Configure your environment variables for Convex.
+   - Run the development server:
+
+     ```bash
+     npm run dev
+     # or
+     yarn dev
+     ```
+
+5. **Setup Native Application:**
+
+   - Go to `/apps/native`.
+   - Configure environment variables as needed.
+   - Start the Expo development server:
+
+     ```bash
+     npm start
+     # or
+     yarn start
+     ```
+
+6. **Authentication:**
+
+   - Use the Convex Auth system to sign in.
+   - Ensure that the authentication flow integrates seamlessly with tenant context and contractor roles.
+
+7. **Usage:**
+
+   - Once logged in and a tenant is selected, navigate through both web and native interfaces to manage worksites, incidents, alerts, assets, projects, work orders, contractor profiles, and notifications.
+   - Use interactive maps to visualize real-time data and notification triggers.
 
 ---
 
 ## Notes
 
 - **RBAC Enforcement:**  
-  All Convex functions thoroughly verify user permissions to safeguard multi-tenant data integrity.
-  
+  Every Convex function strictly verifies user permissions to maintain data integrity in a multi-tenant environment.
 - **Progressive Enhancement:**  
-  Prioritize core functionalities like multi-tenancy, worksite management, and incident reporting. Additional features (assets, projects, advanced alert configurations) can be integrated progressively.
-
-- **Removal of Placeholder Data:**  
-  Ensure that no mock data or temporary state management remain; the application should rely entirely on Convex for state persistence.
-
-- **Team Collaboration:**  
-  Frontend components are designed as modular Next.js client components for ease of collaboration and future scalability.
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-This README should serve as both a high-level overview and a guide for developers onboarding onto the project. Detailed code comments, inline documentation, and additional architectural diagrams should be maintained to further support development and future enhancements.
-
-Happy Coding!
+  Focus first on primary features (multi-tenancy, worksite management, incident reporting, project/work order management) and progressively integrate modules such as contractor management and notifications.
+- **Notifications Module Integration:**  
+  The new notifications module attaches contextual alerts to many entities. Configure multiple reminder times, custom messages, and assign notifications to multiple users with optional repeatable scheduling.
+- **Monorepo Benefits:**  
+  The Turborepo structure centralizes dependency management and streamlines the shared configuration across backend, web, and native apps.
+- **Data Integrity:**  
+  Replace all placeholder or mock data with actual tenant-scoped data fetched from Convex.
+- **Modular Frontend Components:**  
+  Both web and native app components are built to be modular and scalable for future enhancements.

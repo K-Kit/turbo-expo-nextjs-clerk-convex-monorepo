@@ -19,11 +19,13 @@ import type * as incidents from "../incidents.js";
 import type * as notes from "../notes.js";
 import type * as openai from "../openai.js";
 import type * as pois from "../pois.js";
+import type * as projects from "../projects.js";
 import type * as seed from "../seed.js";
 import type * as tenants from "../tenants.js";
 import type * as users from "../users.js";
 import type * as utils_auth from "../utils/auth.js";
 import type * as utils from "../utils.js";
+import type * as workorders from "../workorders.js";
 import type * as worksites from "../worksites.js";
 
 /**
@@ -41,11 +43,13 @@ declare const fullApi: ApiFromModules<{
   notes: typeof notes;
   openai: typeof openai;
   pois: typeof pois;
+  projects: typeof projects;
   seed: typeof seed;
   tenants: typeof tenants;
   users: typeof users;
   "utils/auth": typeof utils_auth;
   utils: typeof utils;
+  workorders: typeof workorders;
   worksites: typeof worksites;
 }>;
 export declare const api: FilterApi<

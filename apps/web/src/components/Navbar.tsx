@@ -10,7 +10,9 @@ import {
   Home, 
   Users, 
   Building, 
-  Mail 
+  Mail,
+  Briefcase,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,8 @@ const navItems = [
   { name: "Map", href: "/map", icon: Map },
   { name: "Points of Interest", href: "/pois", icon: AlertTriangle },
   { name: "Assets", href: "/assets", icon: TruckIcon },
+  { name: "Projects", href: "/projects", icon: Briefcase },
+  { name: "Work Orders", href: "/workorders", icon: ClipboardList },
   { name: "Incidents", href: "/incidents", icon: FileWarning },
   { name: "Worksites", href: "/worksites", icon: Building },
   { name: "Tenants", href: "/tenants", icon: Users },

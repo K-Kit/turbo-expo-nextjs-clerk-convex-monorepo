@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
@@ -11,26 +11,27 @@ import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapView } from "@/components/map/MapView";
 
-export default function AssetDetailPage({ params }: { params: { id: string } }) {
+export default function AssetDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Convert string ID to Convex ID
   const assetId = params.id;
-  
+
   // Get asset details
   const asset = useQuery(api.assets.getAsset, { id: assetId });
-  
+
   // Get asset history
   const history = useQuery(api.assets.getAssetHistory, { assetId, limit: 10 });
-  
+
   // Get assigned user details if any
   const assignedUser = asset?.assignedTo 
     ? useQuery(api.users.getUser, { id: asset.assignedTo })
     : null;
-  
+
   const deleteAsset = useMutation(api.assets.deleteAsset);
-  
+
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this asset?")) {
       return;
@@ -47,11 +48,11 @@ export default function AssetDetailPage({ params }: { params: { id: string } }) 
       setIsDeleting(false);
     }
   };
-  
+
   if (!asset) {
     return <div className="p-4">Loading asset details...</div>;
   }
-  
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">

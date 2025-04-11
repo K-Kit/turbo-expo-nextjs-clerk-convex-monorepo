@@ -209,6 +209,116 @@ export default defineSchema(
     })
       .index("by_asset", ["assetId"])
       .index("by_asset_time", ["assetId", "timestamp"]),
+      
+    // Projects table
+    projects: defineTable({
+      name: v.string(),
+      description: v.optional(v.string()),
+      tenantId: v.id("tenants"),
+      worksiteId: v.optional(v.id("worksites")),
+      status: v.string(), // "planned", "in_progress", "completed", "on_hold", "cancelled"
+      priority: v.string(), // "low", "medium", "high", "critical"
+      startDate: v.optional(v.number()),
+      endDate: v.optional(v.number()),
+      budget: v.optional(v.number()),
+      managerId: v.optional(v.id("users")),
+      teamMembers: v.optional(v.array(v.id("users"))),
+      tags: v.optional(v.array(v.string())),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_worksite", ["worksiteId"])
+      .index("by_manager", ["managerId"])
+      .index("by_tenant_status", ["tenantId", "status"])
+      .index("by_dates", ["tenantId", "startDate", "endDate"]),
+      
+    // Project tasks table
+    projectTasks: defineTable({
+      projectId: v.id("projects"),
+      name: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(), // "todo", "in_progress", "completed", "blocked"
+      assignedTo: v.optional(v.id("users")),
+      dueDate: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_project", ["projectId"])
+      .index("by_assignee", ["assignedTo"])
+      .index("by_project_status", ["projectId", "status"]),
+      
+    // Work Orders table
+    workOrders: defineTable({
+      tenantId: v.id("tenants"),
+      number: v.string(), // Work order number (e.g., "WO-2023-001")
+      title: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(), // "open", "in_progress", "completed", "on_hold", "cancelled"
+      priority: v.string(), // "low", "medium", "high", "critical"
+      type: v.string(), // "maintenance", "inspection", "repair", "installation", "other"
+      projectId: v.optional(v.id("projects")), // Related project (optional)
+      assetId: v.optional(v.id("assets")), // Related asset (optional)
+      location: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
+      assignedTeam: v.optional(v.id("users")), // Team assigned to the work order
+      assignedTo: v.optional(v.id("users")), // Individual assigned to the work order
+      dueDate: v.optional(v.number()),
+      startDate: v.optional(v.number()),
+      completedDate: v.optional(v.number()),
+      estimatedHours: v.optional(v.number()),
+      actualHours: v.optional(v.number()),
+      cost: v.optional(v.number()),
+      tags: v.optional(v.array(v.string())),
+      attachments: v.optional(v.array(v.id("_storage"))), // References to uploaded files
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_tenant_status", ["tenantId", "status"])
+      .index("by_tenant_type", ["tenantId", "type"])
+      .index("by_tenant_priority", ["tenantId", "priority"])
+      .index("by_project", ["projectId"])
+      .index("by_asset", ["assetId"])
+      .index("by_assigned_team", ["assignedTeam"])
+      .index("by_assigned_to", ["assignedTo"])
+      .index("by_dates", ["tenantId", "dueDate"]),
+      
+    // Work Order Tasks table
+    workOrderTasks: defineTable({
+      workOrderId: v.id("workOrders"),
+      name: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(), // "pending", "in_progress", "completed"
+      assignedTo: v.optional(v.id("users")),
+      estimatedHours: v.optional(v.number()),
+      actualHours: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      createdBy: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_work_order", ["workOrderId"])
+      .index("by_status", ["workOrderId", "status"])
+      .index("by_assignee", ["assignedTo"]),
+      
+    // Work Order Comments table
+    workOrderComments: defineTable({
+      workOrderId: v.id("workOrders"),
+      authorId: v.id("users"),
+      text: v.string(),
+      attachments: v.optional(v.array(v.id("_storage"))),
+      createdAt: v.number(),
+    })
+      .index("by_work_order", ["workOrderId"])
+      .index("by_author", ["authorId"])
+      .index("by_work_order_time", ["workOrderId", "createdAt"]),
   },
   {
     schemaValidation: false,

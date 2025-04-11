@@ -10,7 +10,10 @@ import { MapContainer, Marker, Popup, TileLayer, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
-
+import { mapViewSettingsAtom, useWorksite, useWorksites } from "@/lib/atoms";
+import { useWorksiteId } from "@/lib/atoms";
+import { useAtomValue } from "jotai";
+import { cn } from "@/lib/utils";
 // This is a placeholder component - in a real implementation, you would use a proper map library
 // like react-leaflet, Mapbox, or Google Maps
 const MapPlaceholder = ({
@@ -19,12 +22,14 @@ const MapPlaceholder = ({
   height = 500,
   zoom = 12,
   center,
+  className,
 }: {
   items: any[];
   onItemClick: (item: any) => void;
   height?: number;
   zoom?: number;
   center?: { lat: number; lng: number };
+  className?: string;
 }) => {
   const [lat, lng] = [37.771365, -122.417225];
   const position = { lat: center?.lat || lat, lng: center?.lng || lng };
@@ -33,12 +38,9 @@ const MapPlaceholder = ({
       center={position}
       zoom={zoom}
       scrollWheelZoom={false}
-      className="w-full h-full"
+      className={cn("w-full h-full", className)}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Marker position={position}>
         <Popup>
           A pretty CSS3 popup. <br /> Easily customizable.
@@ -49,14 +51,13 @@ const MapPlaceholder = ({
 };
 
 export function MapView({
-  showPOIs = true,
-  showAssets = true,
   poiFilter,
   assetFilter,
   height = 500,
   onItemClick,
   center,
   zoom = 12,
+  mapClassName,
 }: {
   showPOIs?: boolean;
   showAssets?: boolean;
@@ -66,9 +67,12 @@ export function MapView({
   onItemClick?: (item: any) => void;
   center?: { lat: number; lng: number };
   zoom?: number;
+  mapClassName?: string;
 }) {
   const tenantId = useTenantId();
   const [combinedItems, setCombinedItems] = useState<any[]>([]);
+  const { showPOIs, showAssets, showIncidents, showWorksite } =
+    useAtomValue(mapViewSettingsAtom);
 
   // Fetch POIs if enabled
   const pois = useQuery(
@@ -93,7 +97,14 @@ export function MapView({
         }
       : "skip",
   );
-
+  const incidents = useQuery(
+    api.incidents.listIncidentsByTenant,
+    showIncidents && tenantId
+      ? {
+          tenantId,
+        }
+      : "skip",
+  );
   // Combine POIs and Assets for display
   useEffect(() => {
     const items: any[] = [];
@@ -106,8 +117,12 @@ export function MapView({
       items.push(...assets);
     }
 
+    if (incidents) {
+      items.push(...incidents);
+    }
+
     setCombinedItems(items);
-  }, [pois, assets]);
+  }, [pois, assets, incidents]);
 
   const handleItemClick = (item: any) => {
     if (onItemClick) {
@@ -124,15 +139,14 @@ export function MapView({
   }
 
   return (
-    <div className={`w-full h-[${height}px]`}>
-      <MapPlaceholder
-        items={combinedItems}
-        onItemClick={handleItemClick}
-        height={height}
-        // center={center}
-        // zoom={zoom}
-      />
-    </div>
+    <MapPlaceholder
+      items={combinedItems}
+      onItemClick={handleItemClick}
+      height={height}
+      center={center}
+      zoom={zoom}
+      className={mapClassName}
+    />
   );
 }
 

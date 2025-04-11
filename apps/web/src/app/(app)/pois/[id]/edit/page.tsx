@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, ChangeEvent, useEffect } from "react";
+import { useState, FormEvent, ChangeEvent, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { AlertTriangle, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Id } from '@/../../../packages/backend/convex/_generated/dataModel';
+import { MapView } from "@/components/map/MapView";
 
 interface Coordinates {
   lat: number;
@@ -57,19 +58,20 @@ const CoordinatePicker = ({
   );
 };
 
-export default function EditPOIPage({ params }: { params: { id: string } }) {
+export default function EditPOIPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const { toast } = useToast();
   const tenantId = useTenantId();
-  
+
   // Convex expects this as an Id<"pois">, so we cast it
   // In runtime it's just a string, so this is safe
   const poiId = params.id as unknown as Id<"pois">;
-  
+
   // Get POI details
   const poi = useQuery(api.pois.getPOI, { id: poiId });
   const updatePOI = useMutation(api.pois.updatePOI);
-  
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("hazard");
@@ -77,7 +79,7 @@ export default function EditPOIPage({ params }: { params: { id: string } }) {
   const [location, setLocation] = useState<Coordinates>({ lat: 0, lng: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Populate form with existing POI data when fetched
   useEffect(() => {
     if (poi) {
@@ -88,7 +90,7 @@ export default function EditPOIPage({ params }: { params: { id: string } }) {
       setLocation(poi.location);
     }
   }, [poi]);
-  
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -134,11 +136,11 @@ export default function EditPOIPage({ params }: { params: { id: string } }) {
       setIsSubmitting(false);
     }
   };
-  
+
   if (!poi) {
     return <div className="p-4">Loading POI details...</div>;
   }
-  
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
@@ -225,9 +227,12 @@ export default function EditPOIPage({ params }: { params: { id: string } }) {
             <div>
               <Label>Location</Label>
               <CoordinatePicker value={location} onChange={setLocation} />
-              <p className="text-xs text-gray-500 mt-1">
-                In a real application, this would be a map picker component
-              </p>
+              <MapView
+                mapClassName="min-h-[400px] sm:max-h-[400px]"
+                center={location}
+                zoom={15}
+                height={300}
+              />
             </div>
           </CardContent>
           
