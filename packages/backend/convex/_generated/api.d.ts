@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as geofences from "../geofences.js";
+import type * as incidents from "../incidents.js";
 import type * as notes from "../notes.js";
 import type * as openai from "../openai.js";
 import type * as seed from "../seed.js";
@@ -33,6 +34,7 @@ import type * as worksites from "../worksites.js";
  */
 declare const fullApi: ApiFromModules<{
   geofences: typeof geofences;
+  incidents: typeof incidents;
   notes: typeof notes;
   openai: typeof openai;
   seed: typeof seed;

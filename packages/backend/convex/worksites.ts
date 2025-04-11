@@ -15,7 +15,7 @@ export const create = mutation({
       v.object({
         latitude: v.number(),
         longitude: v.number(),
-      })
+      }),
     ),
     radius: v.optional(v.number()),
   },
@@ -40,8 +40,8 @@ export const create = mutation({
     // Check if user is a member of this tenant
     const membership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", args.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", args.tenantId),
       )
       .unique();
 
@@ -90,7 +90,7 @@ export const listByTenant = query({
       description: v.optional(v.string()),
       address: v.optional(v.string()),
       userRole: v.optional(v.string()),
-    })
+    }),
   ),
   handler: async (ctx, args) => {
     // Get the current user
@@ -112,8 +112,8 @@ export const listByTenant = query({
     // Check if user is a member of this tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", args.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", args.tenantId),
       )
       .unique();
 
@@ -138,7 +138,7 @@ export const listByTenant = query({
       userWorksiteMemberships.map((membership) => [
         membership.worksiteId.toString(),
         membership.role,
-      ])
+      ]),
     );
 
     // Add user role information to worksites
@@ -166,15 +166,17 @@ export const get = query({
       name: v.string(),
       description: v.optional(v.string()),
       address: v.optional(v.string()),
-      coordinates: v.optional(v.object({
-        latitude: v.number(),
-        longitude: v.number(),
-      })),
+      coordinates: v.optional(
+        v.object({
+          latitude: v.number(),
+          longitude: v.number(),
+        }),
+      ),
       radius: v.optional(v.number()),
       userRole: v.optional(v.string()),
       createdAt: v.number(),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx, args) => {
     // Get the current user
@@ -202,8 +204,8 @@ export const get = query({
     // Check if user is a member of this tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -214,8 +216,8 @@ export const get = query({
     // Get user's worksite role if any
     const worksiteMembership = await ctx.db
       .query("userWorksites")
-      .withIndex("by_user_and_worksite", (q) => 
-        q.eq("userId", user._id).eq("worksiteId", args.worksiteId)
+      .withIndex("by_user_and_worksite", (q) =>
+        q.eq("userId", user._id).eq("worksiteId", args.worksiteId),
       )
       .unique();
 
@@ -229,7 +231,6 @@ export const get = query({
       coordinates: worksite.coordinates,
       radius: worksite.radius,
       createdAt: worksite._creationTime,
-
     };
   },
 });
@@ -270,8 +271,8 @@ export const addUserToWorksite = mutation({
     // Check if current user has admin access to the tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -281,15 +282,15 @@ export const addUserToWorksite = mutation({
 
     // Check if current user has admin or manager role for the tenant or worksite
     const hasAdminAccess = tenantMembership.role === "admin";
-    
+
     if (!hasAdminAccess) {
       const worksiteMembership = await ctx.db
         .query("userWorksites")
-        .withIndex("by_user_and_worksite", (q) => 
-          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        .withIndex("by_user_and_worksite", (q) =>
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId),
         )
         .unique();
-      
+
       if (!worksiteMembership || worksiteMembership.role !== "manager") {
         throw new Error("Not authorized to add users to this worksite");
       }
@@ -298,8 +299,8 @@ export const addUserToWorksite = mutation({
     // Check if user belongs to the tenant
     const userTenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", args.userId).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", args.userId).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -310,8 +311,8 @@ export const addUserToWorksite = mutation({
     // Check if user is already assigned to this worksite
     const existingMembership = await ctx.db
       .query("userWorksites")
-      .withIndex("by_user_and_worksite", (q) => 
-        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId)
+      .withIndex("by_user_and_worksite", (q) =>
+        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId),
       )
       .unique();
 
@@ -372,8 +373,8 @@ export const removeUserFromWorksite = mutation({
     // Check if current user has admin access to the tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -383,15 +384,15 @@ export const removeUserFromWorksite = mutation({
 
     // Check if current user has admin or manager role for the tenant or worksite
     const hasAdminAccess = tenantMembership.role === "admin";
-    
+
     if (!hasAdminAccess) {
       const worksiteMembership = await ctx.db
         .query("userWorksites")
-        .withIndex("by_user_and_worksite", (q) => 
-          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        .withIndex("by_user_and_worksite", (q) =>
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId),
         )
         .unique();
-      
+
       if (!worksiteMembership || worksiteMembership.role !== "manager") {
         throw new Error("Not authorized to remove users from this worksite");
       }
@@ -405,8 +406,8 @@ export const removeUserFromWorksite = mutation({
     // Find the membership to remove
     const membershipToRemove = await ctx.db
       .query("userWorksites")
-      .withIndex("by_user_and_worksite", (q) => 
-        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId)
+      .withIndex("by_user_and_worksite", (q) =>
+        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId),
       )
       .unique();
 
@@ -457,8 +458,8 @@ export const updateUserWorksiteRole = mutation({
     // Check if current user has admin access to the tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", currentUser._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -468,15 +469,15 @@ export const updateUserWorksiteRole = mutation({
 
     // Check if current user has admin or manager role for the tenant or worksite
     const hasAdminAccess = tenantMembership.role === "admin";
-    
+
     if (!hasAdminAccess) {
       const worksiteMembership = await ctx.db
         .query("userWorksites")
-        .withIndex("by_user_and_worksite", (q) => 
-          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId)
+        .withIndex("by_user_and_worksite", (q) =>
+          q.eq("userId", currentUser._id).eq("worksiteId", args.worksiteId),
         )
         .unique();
-      
+
       if (!worksiteMembership || worksiteMembership.role !== "manager") {
         throw new Error("Not authorized to update user roles in this worksite");
       }
@@ -490,8 +491,8 @@ export const updateUserWorksiteRole = mutation({
     // Find the membership to update
     const membershipToUpdate = await ctx.db
       .query("userWorksites")
-      .withIndex("by_user_and_worksite", (q) => 
-        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId)
+      .withIndex("by_user_and_worksite", (q) =>
+        q.eq("userId", args.userId).eq("worksiteId", args.worksiteId),
       )
       .unique();
 
@@ -515,15 +516,6 @@ export const listWorksiteUsers = query({
   args: {
     worksiteId: v.id("worksites"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("users"),
-      name: v.string(),
-      email: v.string(),
-      profilePicture: v.optional(v.string()),
-      role: v.string(),
-    })
-  ),
   handler: async (ctx, args) => {
     // Get the current user
     const identity = await ctx.auth.getUserIdentity();
@@ -550,8 +542,8 @@ export const listWorksiteUsers = query({
     // Check if user has access to the tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -570,7 +562,7 @@ export const listWorksiteUsers = query({
       userWorksites.map(async (userWorksite) => {
         const userData = await ctx.db.get(userWorksite.userId);
         if (!userData) return null;
-        
+
         return {
           _id: userData._id,
           name: userData.name,
@@ -578,7 +570,7 @@ export const listWorksiteUsers = query({
           profilePicture: userData.profilePicture,
           role: userWorksite.role,
         };
-      })
+      }),
     );
 
     // Filter out null entries
@@ -591,20 +583,6 @@ export const listWorksiteUsers = query({
  */
 export const listForUser = query({
   args: {},
-  returns: v.array(
-    v.object({
-      _id: v.id("worksites"),
-      name: v.string(),
-      address: v.optional(v.string()),
-      tenantId: v.id("tenants"),
-      tenantName: v.string(),
-      coordinates: v.object({
-        latitude: v.number(),
-        longitude: v.number(),
-      }),
-      radius: v.number(),
-    })
-  ),
   handler: async (ctx) => {
     // Get the current user
     const identity = await ctx.auth.getUserIdentity();
@@ -630,9 +608,7 @@ export const listForUser = query({
 
     // Create a map of tenant IDs to tenant names for easy lookup
     const tenantIds = userTenants.map((ut) => ut.tenantId);
-    const tenants = await Promise.all(
-      tenantIds.map((id) => ctx.db.get(id))
-    );
+    const tenants = await Promise.all(tenantIds.map((id) => ctx.db.get(id)));
     const tenantMap = new Map();
     tenants.forEach((tenant) => {
       if (tenant) {
@@ -647,7 +623,7 @@ export const listForUser = query({
         .query("worksites")
         .withIndex("by_tenant", (q) => q.eq("tenantId", tenantId))
         .collect();
-      
+
       // Add tenant name to each worksite
       const enrichedWorksites = worksites.map((worksite) => ({
         _id: worksite._id,
@@ -658,7 +634,7 @@ export const listForUser = query({
         coordinates: worksite.coordinates || { latitude: 0, longitude: 0 },
         radius: worksite.radius || 100,
       }));
-      
+
       allWorksites.push(...enrichedWorksites);
     }
 
@@ -678,7 +654,7 @@ export const update = mutation({
       v.object({
         latitude: v.number(),
         longitude: v.number(),
-      })
+      }),
     ),
     radius: v.optional(v.number()),
   },
@@ -709,8 +685,8 @@ export const update = mutation({
     // Check if user has access to this tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -719,7 +695,10 @@ export const update = mutation({
     }
 
     // Only admins and managers can update worksites
-    if (tenantMembership.role !== "admin" && tenantMembership.role !== "manager") {
+    if (
+      tenantMembership.role !== "admin" &&
+      tenantMembership.role !== "manager"
+    ) {
       throw new Error("Insufficient permissions");
     }
 
@@ -770,8 +749,8 @@ export const deleteWorksite = mutation({
     // Check if user has access to this tenant
     const tenantMembership = await ctx.db
       .query("userTenants")
-      .withIndex("by_user_and_tenant", (q) => 
-        q.eq("userId", user._id).eq("tenantId", worksite.tenantId)
+      .withIndex("by_user_and_tenant", (q) =>
+        q.eq("userId", user._id).eq("tenantId", worksite.tenantId),
       )
       .unique();
 
@@ -808,4 +787,4 @@ export const deleteWorksite = mutation({
     await ctx.db.delete(args.worksiteId);
     return true;
   },
-}); 
+});

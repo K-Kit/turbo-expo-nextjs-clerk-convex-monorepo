@@ -48,6 +48,48 @@ export default defineSchema(
       radius: v.optional(v.number()),
     }).index("by_tenant", ["tenantId"]),
 
+    // Incidents table - for tracking safety incidents
+    incidents: defineTable({
+      // Relations
+      tenantId: v.id("tenants"),
+      worksiteId: v.optional(v.id("worksites")),
+      reportedById: v.id("users"),
+      assignedToId: v.optional(v.id("users")),
+      
+      // Incident details
+      title: v.string(),
+      description: v.string(),
+      incidentType: v.string(), // e.g., "injury", "near_miss", "hazard", "property_damage"
+      status: v.string(), // e.g., "reported", "investigating", "resolved", "closed"
+      severity: v.string(), // e.g., "low", "medium", "high", "critical"
+      
+      // Location
+      location: v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+      }),
+      address: v.optional(v.string()),
+      
+      // Timestamps
+      reportedAt: v.number(), // When the incident was reported
+      occuredAt: v.optional(v.number()), // When the incident actually happened
+      resolvedAt: v.optional(v.number()), // When the incident was resolved
+      
+      // Additional fields
+      tags: v.optional(v.array(v.string())),
+      images: v.optional(v.array(v.id("_storage"))), // References to uploaded images
+      actionTaken: v.optional(v.string()),
+      preventativeMeasures: v.optional(v.string()),
+    })
+      .index("by_tenant", ["tenantId"])
+      .index("by_worksite", ["worksiteId"])
+      .index("by_reporter", ["reportedById"])
+      .index("by_assignee", ["assignedToId"])
+      .index("by_status", ["tenantId", "status"])
+      .index("by_type", ["tenantId", "incidentType"])
+      .index("by_severity", ["tenantId", "severity"])
+      .index("by_date", ["tenantId", "reportedAt"]),
+
     // Geofences table - polygon boundaries for worksites
     geofences: defineTable({
       worksiteId: v.id("worksites"),

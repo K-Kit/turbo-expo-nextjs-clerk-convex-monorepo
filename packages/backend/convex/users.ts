@@ -273,15 +273,6 @@ export const listByTenant = query({
   args: {
     tenantId: v.id("tenants"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("users"),
-      name: v.string(),
-      email: v.string(),
-      profilePicture: v.optional(v.string()),
-      role: v.string(),
-    }),
-  ),
   handler: async (ctx, args) => {
     // Get the current user
     const identity = await ctx.auth.getUserIdentity();
