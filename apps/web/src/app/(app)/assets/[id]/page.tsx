@@ -3,12 +3,18 @@
 import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
-import { api } from '@/../../../packages/backend/convex/_generated/api';
+import { api } from "@/../../../packages/backend/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Truck, Wrench, Edit, Trash, ArrowLeft, User } from 'lucide-react';
+import { Truck, Wrench, Edit, Trash, ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { MapView } from "@/components/map/MapView";
 import { useParams } from "next/navigation";
 import { Id } from "@/../../../packages/backend/convex/_generated/dataModel";
@@ -28,9 +34,10 @@ export default function AssetDetailPage() {
   const history = useQuery(api.assets.getAssetHistory, { assetId, limit: 10 });
 
   // Get assigned user details if any
-  const assignedUser = asset?.assignedTo 
-    ? useQuery(api.users.getUser, { id: asset.assignedTo })
-    : null;
+  const assignedUser = useQuery(
+    api.users.get,
+    asset?.assignedTo ? { userId: asset.assignedTo } : "skip",
+  );
 
   const deleteAsset = useMutation(api.assets.deleteAsset);
 
@@ -38,7 +45,7 @@ export default function AssetDetailPage() {
     if (!confirm("Are you sure you want to delete this asset?")) {
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       await deleteAsset({ id: assetId });
@@ -58,12 +65,16 @@ export default function AssetDetailPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <Button variant="outline" size="sm" onClick={() => router.push("/assets")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push("/assets")}
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Assets
         </Button>
       </div>
-      
+
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center">
           {asset.type === "vehicle" ? (
@@ -73,7 +84,7 @@ export default function AssetDetailPage() {
           )}
           <h1 className="text-3xl font-bold">{asset.name}</h1>
         </div>
-        
+
         <div className="flex space-x-2">
           <Link href={`/assets/${assetId}/edit`}>
             <Button variant="outline" className="flex items-center">
@@ -81,8 +92,8 @@ export default function AssetDetailPage() {
               Edit
             </Button>
           </Link>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             className="flex items-center"
             onClick={handleDelete}
             disabled={isDeleting}
@@ -92,7 +103,7 @@ export default function AssetDetailPage() {
           </Button>
         </div>
       </div>
-      
+
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <Card>
@@ -102,11 +113,13 @@ export default function AssetDetailPage() {
             <CardContent className="space-y-4">
               {asset.description && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Description</h3>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Description
+                  </h3>
                   <p className="mt-1">{asset.description}</p>
                 </div>
               )}
-              
+
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Type</h3>
                 <p className="mt-1 flex items-center">
@@ -125,30 +138,37 @@ export default function AssetDetailPage() {
                   )}
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Status</h3>
                 <p className="mt-1">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    asset.status === "operational" ? "bg-green-100 text-green-800" : 
-                    asset.status === "maintenance" ? "bg-amber-100 text-amber-800" : 
-                    "bg-red-100 text-red-800"
-                  }`}>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      asset.status === "operational"
+                        ? "bg-green-100 text-green-800"
+                        : asset.status === "maintenance"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-red-100 text-red-800"
+                    }`}
+                  >
                     {asset.status}
                   </span>
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Location</h3>
                 <p className="mt-1">
-                  Latitude: {asset.location.lat.toFixed(6)}, Longitude: {asset.location.lng.toFixed(6)}
+                  Latitude: {asset.location.lat.toFixed(6)}, Longitude:{" "}
+                  {asset.location.lng.toFixed(6)}
                 </p>
               </div>
-              
+
               {assignedUser && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Assigned To</h3>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Assigned To
+                  </h3>
                   <p className="mt-1 flex items-center">
                     <User className="h-4 w-4 mr-2 text-gray-500" />
                     {assignedUser.name}
@@ -157,7 +177,7 @@ export default function AssetDetailPage() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Location Map */}
           <div className="mt-6">
             <Card>
@@ -165,7 +185,7 @@ export default function AssetDetailPage() {
                 <CardTitle>Location Map</CardTitle>
               </CardHeader>
               <CardContent>
-                <MapView 
+                <MapView
                   showPOIs={false}
                   showAssets={true}
                   center={asset.location}
@@ -175,7 +195,7 @@ export default function AssetDetailPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Asset History */}
           <div className="mt-6">
             <Card>
@@ -187,13 +207,20 @@ export default function AssetDetailPage() {
                   history.length > 0 ? (
                     <div className="space-y-4">
                       {history.map((entry) => (
-                        <div key={entry._id} className="border-b pb-4 last:border-b-0">
+                        <div
+                          key={entry._id}
+                          className="border-b pb-4 last:border-b-0"
+                        >
                           <div className="flex justify-between">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              entry.status === "operational" ? "bg-green-100 text-green-800" : 
-                              entry.status === "maintenance" ? "bg-amber-100 text-amber-800" : 
-                              "bg-red-100 text-red-800"
-                            }`}>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                entry.status === "operational"
+                                  ? "bg-green-100 text-green-800"
+                                  : entry.status === "maintenance"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {entry.status}
                             </span>
                             <span className="text-sm text-gray-500">
@@ -201,13 +228,16 @@ export default function AssetDetailPage() {
                             </span>
                           </div>
                           <div className="mt-2 text-sm">
-                            Location: {entry.location.lat.toFixed(6)}, {entry.location.lng.toFixed(6)}
+                            Location: {entry.location.lat.toFixed(6)},{" "}
+                            {entry.location.lng.toFixed(6)}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500">No history entries available</p>
+                    <p className="text-gray-500">
+                      No history entries available
+                    </p>
                   )
                 ) : (
                   <p className="text-gray-500">Loading history...</p>
@@ -216,7 +246,7 @@ export default function AssetDetailPage() {
             </Card>
           </div>
         </div>
-        
+
         <div>
           <Card>
             <CardHeader>
@@ -229,16 +259,20 @@ export default function AssetDetailPage() {
                   {formatDistanceToNow(asset.createdAt)} ago
                 </p>
               </div>
-              
+
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Last Updated
+                </h3>
                 <p className="mt-1 text-sm text-gray-900">
                   {formatDistanceToNow(asset.updatedAt)} ago
                 </p>
               </div>
-              
+
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Last Status Change</h3>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Last Status Change
+                </h3>
                 <p className="mt-1 text-sm text-gray-900">
                   {formatDistanceToNow(asset.lastUpdated)} ago
                 </p>
@@ -249,4 +283,4 @@ export default function AssetDetailPage() {
       </div>
     </div>
   );
-} 
+}

@@ -6,3 +6,5 @@ alwaysApply: true
 use bun package manager
 
 the convex directory is located at ./packages/backend
+native app at apps/native
+web at apps/web

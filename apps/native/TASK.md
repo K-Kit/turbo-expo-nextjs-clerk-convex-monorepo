@@ -33,29 +33,47 @@ The foundation and architecture for the WorkSafeMaps native application have bee
 - Implemented basic queries for tenants, worksites, incidents, and projects
 - Connected UI components to backend data
 
-## Next Steps: Phase 2 - Map Integration 🗺️
+## Phase 2: Map Integration - IN PROGRESS 🔄
 
-The next phase will focus on integrating mapping functionality:
+Progress made on integrating mapping functionality:
 
-1. **Map SDK Integration**
-   - Add MapLibre or Mapbox dependency
-   - Implement base map view component
+1. **Map SDK Integration** ✅
+   - Added react-native-maps dependency
+   - Implemented base map view component
+   - Set up location permissions and user location tracking
 
-2. **Map Layers**
-   - Create layer system for worksites, incidents, assets, POIs
-   - Implement markers and popups for map items
+2. **Map Layers** ✅
+   - Created layer toggling system for worksites, incidents, assets, POIs
+   - Implemented markers for worksites and incidents
+   - Added color-coding for incident severity
 
-3. **Location Services**
-   - Set up user location tracking
-   - Implement geofencing capabilities
-   - Add proximity alerts
+3. **Location Services** ✅
+   - Implemented user location tracking
+   - Added support for initial region based on user location
 
-4. **Map Controls**
-   - Add layer toggling UI
-   - Implement search and filtering
-   - Add zoom and center controls
+4. **Next Steps:**
+   - Complete custom marker styling 
+   - Add geofencing capabilities
+   - Add search and filtering functionality
+   - Implement clustering for markers
+   - Add offline map support
 
-This phase will transform the placeholder map screen into a fully functional interactive map that serves as the core navigation tool for the application.
+## Phase 3: Reporting & Work Orders - PLANNED 📋
+
+The next phase will focus on adding comprehensive incident reporting and work order management directly from the mobile app:
+
+1. **Incident Reporting**
+   - Create incident reporting form
+   - Add photo/document attachments
+   - Enable offline reporting with syncing
+
+2. **Work Order Management**
+   - View assigned work orders
+   - Update work order status
+   - Create new work orders in the field
+   - Attach photos and notes to work orders
+
+This phase will transform the app into a powerful field tool for operations and maintenance teams.
 
 ## Notes
 
