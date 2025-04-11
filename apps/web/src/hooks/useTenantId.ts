@@ -16,10 +16,10 @@ export function useTenantId(): Id<"tenants"> | null {
   const userTenants = useQuery(api.tenants.list);
 
   useEffect(() => {
-    if (userTenants && userTenants.length > 0) {
+    if (!tenantId && userTenants && userTenants.length > 0) {
       setTenantId(userTenants[0]._id);
     }
-  }, [userTenants]);
+  }, [userTenants, tenantId, setTenantId]);
 
   return tenantId;
 }

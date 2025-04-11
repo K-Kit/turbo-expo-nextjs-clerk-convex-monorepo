@@ -1,6 +1,8 @@
 "use client";
 import { useStoreUserEffect } from "@/hooks/use-store-user";
 import { Navbar, MobileNavbar } from "@/components/Navbar";
+import { WorksiteTenantSwitcher } from "@/components/WorksiteTenantSwitcher";
+import { Separator } from "@/components/ui/separator";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useStoreUserEffect();
@@ -17,7 +19,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="h-16 flex items-center px-6 border-b">
             <h1 className="text-lg font-semibold">WorkSafeMaps</h1>
           </div>
-          <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
+          
+          {/* Tenant and Worksite Switcher */}
+          <div className="pt-4">
+            <WorksiteTenantSwitcher />
+            <Separator className="my-4" />
+          </div>
+          
+          <div className="flex-1 flex flex-col overflow-y-auto pb-4">
             <Navbar />
           </div>
         </div>

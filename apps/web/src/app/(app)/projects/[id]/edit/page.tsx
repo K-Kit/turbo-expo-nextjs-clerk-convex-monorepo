@@ -112,7 +112,7 @@ export default function EditProjectPage(props: { params: Promise<{ id: string }>
   
   // Get worksites in the tenant for the worksite dropdown
   const worksites = useQuery(
-    api.worksites.listWorksites, 
+    api.worksites.listByTenant, 
     tenantId ? { tenantId } : "skip"
   );
   

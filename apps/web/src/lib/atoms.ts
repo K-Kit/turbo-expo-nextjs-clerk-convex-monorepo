@@ -2,9 +2,19 @@ import { Id } from "@packages/backend/convex/_generated/dataModel";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { api } from "@/../../../packages/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-
-export const currentTenantIdAtom = atom<Id<"tenants"> | null>(null);
-export const currentWorksiteIdAtom = atom<Id<"worksites"> | null>(null);
+import { atomWithStorage, createJSONStorage } from "jotai/utils";
+const storage = createJSONStorage(
+  // getStringStorage
+  () => localStorage, // or sessionStorage, asyncStorage or alike
+);
+export const currentTenantIdAtom = atomWithStorage<Id<"tenants"> | null>(
+  "currentTenantId",
+  null,
+);
+export const currentWorksiteIdAtom = atomWithStorage<Id<"worksites"> | null>(
+  "currentWorksiteId",
+  null,
+);
 
 export const mapCenterAtom = atom<{ lat: number; lng: number } | null>({
   lat: 37.774929,

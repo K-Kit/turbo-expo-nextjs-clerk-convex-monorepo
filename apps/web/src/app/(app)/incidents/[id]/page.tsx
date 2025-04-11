@@ -327,7 +327,7 @@ export default function IncidentDetailsPage() {
               </Link>
             </Button>
             <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-              <DialogTrigger>
+              <DialogTrigger asChild>
                 <Button>
                   <Edit className="mr-2 h-4 w-4" />
                   Update Incident

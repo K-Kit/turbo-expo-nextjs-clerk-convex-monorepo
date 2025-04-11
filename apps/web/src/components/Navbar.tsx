@@ -13,7 +13,8 @@ import {
   Mail,
   Briefcase,
   ClipboardList,
-  HardHat
+  HardHat,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,10 +63,19 @@ export function Navbar({ className }: { className?: string }) {
 
 export function MobileNavbar({ className }: { className?: string }) {
   const pathname = usePathname();
+  
+  // Limit items to fit mobile screen, and add settings
+  const mobileItems = [
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Map", href: "/map", icon: Map },
+    { name: "Projects", href: "/projects", icon: Briefcase },
+    { name: "Worksites", href: "/worksites", icon: Building },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
 
   return (
     <nav className={cn("flex items-center justify-between px-2 py-1", className)}>
-      {navItems.map((item) => {
+      {mobileItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
         
@@ -82,7 +92,7 @@ export function MobileNavbar({ className }: { className?: string }) {
             title={item.name}
           >
             <Icon className="h-6 w-6 mb-1" aria-hidden="true" />
-            <span className="sr-only">{item.name}</span>
+            <span className="sr-only md:not-sr-only md:text-xs md:font-medium">{item.name}</span>
           </Link>
         );
       })}
