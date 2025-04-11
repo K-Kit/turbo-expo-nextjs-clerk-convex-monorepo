@@ -14,6 +14,19 @@ import { mapViewSettingsAtom, useWorksite, useWorksites } from "@/lib/atoms";
 import { useWorksiteId } from "@/lib/atoms";
 import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
+
+function NoSSR({ children }: { children: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) return null; // This is a placeholder component - in a real implementation, you would use a proper map library
+  // like react-leaflet, Mapbox, or Google Maps
+  return <>{children}</>;
+}
+
 // This is a placeholder component - in a real implementation, you would use a proper map library
 // like react-leaflet, Mapbox, or Google Maps
 const MapPlaceholder = ({
@@ -33,21 +46,27 @@ const MapPlaceholder = ({
 }) => {
   const [lat, lng] = [37.771365, -122.417225];
   const position = { lat: center?.lat || lat, lng: center?.lng || lng };
-  return (
-    <MapContainer
-      center={position}
-      zoom={zoom}
-      scrollWheelZoom={false}
-      className={cn("w-full h-full", className)}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <Marker position={position}>
-        <Popup>
-          A pretty CSS3 popup. <br /> Easily customizable.
-        </Popup>
-      </Marker>
-    </MapContainer>
-  );
+  return <div className={cn("w-full h-full", className)}>Map</div>;
+
+  // // Commented out MapContainer implementation
+  // /*
+  // return (
+  //   <NoSSR>
+  //     <MapContainer
+  //       center={position}
+  //       zoom={zoom}
+  //       scrollWheelZoom={false}
+  //       className={cn("w-full h-full", className)}
+  //     >
+  //       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+  //       <Marker position={position}>
+  //         <Popup>
+  //           A pretty CSS3 popup. <br /> Easily customizable.
+  //         </Popup>
+  //       </Marker>
+  //     </MapContainer>
+  //   </NoSSR>
+  // );
 };
 
 export function MapView({

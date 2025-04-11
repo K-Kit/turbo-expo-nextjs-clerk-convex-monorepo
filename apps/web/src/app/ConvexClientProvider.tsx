@@ -23,8 +23,8 @@ export default function ConvexClientProvider({
         >
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           {children}
-          </ConvexProviderWithClerk>
-        </ClerkProvider>
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
       </Provider>
     </ErrorBoundary>
   );

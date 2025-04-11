@@ -3,6 +3,7 @@ import { useFonts } from "expo-font";
 import { LogBox } from "react-native";
 import Navigation from "./src/navigation/Navigation";
 import ConvexClientProvider from "./ConvexClientProvider";
+import { TenantProvider } from "./src/context/TenantContext";
 
 export default function App() {
   LogBox.ignoreLogs(["Warning: ..."]);
@@ -29,16 +30,18 @@ export default function App() {
 
   return (
     <ConvexClientProvider>
-      <View style={{ flex: 1 }}>
-        <View style={{ height: STATUS_BAR_HEIGHT, backgroundColor: "#0D87E1" }}>
-          <StatusBar
-            translucent
-            backgroundColor={"#0D87E1"}
-            barStyle="light-content"
-          />
+      <TenantProvider>
+        <View style={{ flex: 1 }}>
+          <View style={{ height: STATUS_BAR_HEIGHT, backgroundColor: "#0D87E1" }}>
+            <StatusBar
+              translucent
+              backgroundColor={"#0D87E1"}
+              barStyle="light-content"
+            />
+          </View>
+          <Navigation />
         </View>
-        <Navigation />
-      </View>
+      </TenantProvider>
     </ConvexClientProvider>
   );
 }
