@@ -71,6 +71,7 @@ interface Incident {
   occuredAt?: number;
   resolvedAt?: number;
   actionTaken?: string;
+  preventativeMeasures?: string;
   tags?: string[];
   tenant?: { name: string };
   worksite?: { name: string };
@@ -317,91 +318,99 @@ export default function IncidentDetailsPage() {
               </Badge>
             </div>
           </div>
-          <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" asChild>
+              <Link href={`/incidents/${incidentId}/edit`}>
                 <Edit className="mr-2 h-4 w-4" />
-                Update Incident
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Incident</DialogTitle>
-                <DialogDescription>
-                  Change the status, assignee or add details of action taken
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <label htmlFor="status" className="text-sm font-medium">
-                    Status
-                  </label>
-                  <Select value={newStatus} onValueChange={setNewStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                Edit
+              </Link>
+            </Button>
+            <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Update Incident
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Update Incident</DialogTitle>
+                  <DialogDescription>
+                    Change the status, assignee or add details of action taken
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="status" className="text-sm font-medium">
+                      Status
+                    </label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <label htmlFor="assignee" className="text-sm font-medium">
+                      Assign To
+                    </label>
+                    <Select 
+                      value={newAssigneeId?.toString() || ""} 
+                      onValueChange={(value) => setNewAssigneeId(value ? value as Id<"users"> : undefined)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select assignee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {tenantMembers?.map((member: TenantMember) => (
+                          <SelectItem key={member._id} value={member._id}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <label htmlFor="actions" className="text-sm font-medium">
+                      Actions Taken
+                    </label>
+                    <Textarea
+                      placeholder="Describe actions taken to address this incident"
+                      value={actionTaken}
+                      onChange={(e) => setActionTaken(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
                 </div>
                 
-                <div className="grid gap-2">
-                  <label htmlFor="assignee" className="text-sm font-medium">
-                    Assign To
-                  </label>
-                  <Select 
-                    value={newAssigneeId?.toString() || ""} 
-                    onValueChange={(value) => setNewAssigneeId(value ? value as Id<"users"> : undefined)}
+                <DialogFooter>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setUpdateDialogOpen(false)}
+                    disabled={isSubmitting}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select assignee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
-                      {tenantMembers?.map((member: TenantMember) => (
-                        <SelectItem key={member._id} value={member._id}>
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="actions" className="text-sm font-medium">
-                    Actions Taken
-                  </label>
-                  <Textarea
-                    placeholder="Describe actions taken to address this incident"
-                    value={actionTaken}
-                    onChange={(e) => setActionTaken(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setUpdateDialogOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleUpdateIncident}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleUpdateIncident}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
       
@@ -557,15 +566,21 @@ export default function IncidentDetailsPage() {
               <CardTitle>Prevention Measures</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500 italic">
-                No prevention measures have been added yet.
-              </p>
+              {incident.preventativeMeasures ? (
+                <div>
+                  <p className="whitespace-pre-wrap">{incident.preventativeMeasures}</p>
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">
+                  No prevention measures have been added yet.
+                </p>
+              )}
               <Button 
                 variant="outline" 
                 className="mt-4 w-full"
-                onClick={() => toast.info("This feature will be implemented in a future update")}
+                onClick={() => router.push(`/incidents/${incidentId}/edit`)}
               >
-                Add Prevention Plan
+                {incident.preventativeMeasures ? "Edit Prevention Plan" : "Add Prevention Plan"}
               </Button>
             </CardContent>
           </Card>
