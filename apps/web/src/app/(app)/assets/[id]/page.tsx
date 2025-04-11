@@ -10,14 +10,16 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapView } from "@/components/map/MapView";
+import { useParams } from "next/navigation";
+import { Id } from "@/../../../packages/backend/convex/_generated/dataModel";
 
-export default function AssetDetailPage(props: { params: Promise<{ id: string }> }) {
-  const params = use(props.params);
+export default function AssetDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Convert string ID to Convex ID
-  const assetId = params.id;
+  const assetId = params.id as unknown as Id<"assets">;
 
   // Get asset details
   const asset = useQuery(api.assets.getAsset, { id: assetId });

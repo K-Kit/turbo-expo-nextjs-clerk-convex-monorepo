@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, ChangeEvent, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
 import { useTenantId } from "@/hooks/useTenantId";
@@ -58,8 +58,8 @@ const CoordinatePicker = ({
   );
 };
 
-export default function EditPOIPage(props: { params: Promise<{ id: string }> }) {
-  const params = use(props.params);
+export default function EditPOIPage() {
+  const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const tenantId = useTenantId();

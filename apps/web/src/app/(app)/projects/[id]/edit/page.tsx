@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, ChangeEvent, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from '@/../../../packages/backend/convex/_generated/api';
 import { useTenantId } from "@/hooks/useTenantId";
@@ -82,8 +82,8 @@ const TagInput = ({ tags, onChange }: TagInputProps) => {
   );
 };
 
-export default function EditProjectPage(props: { params: Promise<{ id: string }> }) {
-  const params = use(props.params);
+export default function EditProjectPage() {
+  const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const tenantId = useTenantId();
