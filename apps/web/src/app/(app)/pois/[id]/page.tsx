@@ -9,7 +9,7 @@ import { AlertTriangle, ShieldCheck, Edit, Trash, ArrowLeft } from 'lucide-react
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MapView } from "@/components/map/MapView";
 
 export default function POIDetailPage({ params }: { params: { id: string } }) {

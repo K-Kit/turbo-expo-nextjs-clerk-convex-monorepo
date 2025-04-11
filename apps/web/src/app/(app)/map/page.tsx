@@ -29,7 +29,7 @@ export default function MapPage() {
   const [showMaintenance, setShowMaintenance] = useState(true);
   
   // Handle clicking on an item in the map
-  const handleItemClick = (item) => {
+  const handleItemClick = (item: any) => {
     if (item.type === "hazard" || item.type === "safety_equipment") {
       router.push(`/pois/${item._id}`);
     } else if (item.type === "vehicle" || item.type === "equipment") {
@@ -54,7 +54,7 @@ export default function MapPage() {
                   <Checkbox 
                     id="show-pois" 
                     checked={showPOIs}
-                    onCheckedChange={setShowPOIs}
+                    onCheckedChange={(checked) => setShowPOIs(checked === "indeterminate" ? true : checked)}
                   />
                   <Label htmlFor="show-pois" className="font-medium">
                     Points of Interest
@@ -67,7 +67,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-hazards" 
                         checked={showHazards}
-                        onCheckedChange={setShowHazards}
+                        onCheckedChange={(checked) => setShowHazards(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-hazards" className="flex items-center">
                         <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
@@ -79,7 +79,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-safety-equipment" 
                         checked={showSafetyEquipment}
-                        onCheckedChange={setShowSafetyEquipment}
+                        onCheckedChange={(checked) => setShowSafetyEquipment(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-safety-equipment" className="flex items-center">
                         <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
@@ -91,7 +91,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-active-pois" 
                         checked={showActive}
-                        onCheckedChange={setShowActive}
+                        onCheckedChange={(checked) => setShowActive(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-active-pois">Active</Label>
                     </div>
@@ -100,7 +100,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-inactive-pois" 
                         checked={showInactive}
-                        onCheckedChange={setShowInactive}
+                        onCheckedChange={(checked) => setShowInactive(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-inactive-pois">Inactive</Label>
                     </div>
@@ -114,7 +114,7 @@ export default function MapPage() {
                   <Checkbox 
                     id="show-assets" 
                     checked={showAssets}
-                    onCheckedChange={setShowAssets}
+                    onCheckedChange={(checked) => setShowAssets(checked === "indeterminate" ? true : checked)}
                   />
                   <Label htmlFor="show-assets" className="font-medium">
                     Assets
@@ -127,7 +127,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-vehicles" 
                         checked={showVehicles}
-                        onCheckedChange={setShowVehicles}
+                        onCheckedChange={(checked) => setShowVehicles(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-vehicles" className="flex items-center">
                         <Truck className="h-4 w-4 mr-2 text-blue-500" />
@@ -139,7 +139,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-equipment" 
                         checked={showEquipment}
-                        onCheckedChange={setShowEquipment}
+                        onCheckedChange={(checked) => setShowEquipment(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-equipment" className="flex items-center">
                         <Wrench className="h-4 w-4 mr-2 text-amber-500" />
@@ -151,7 +151,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-operational-assets" 
                         checked={showOperational}
-                        onCheckedChange={setShowOperational}
+                        onCheckedChange={(checked) => setShowOperational(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-operational-assets">Operational</Label>
                     </div>
@@ -160,7 +160,7 @@ export default function MapPage() {
                       <Checkbox 
                         id="show-maintenance-assets" 
                         checked={showMaintenance}
-                        onCheckedChange={setShowMaintenance}
+                        onCheckedChange={(checked) => setShowMaintenance(checked === "indeterminate" ? true : checked)}
                       />
                       <Label htmlFor="show-maintenance-assets">Maintenance</Label>
                     </div>
