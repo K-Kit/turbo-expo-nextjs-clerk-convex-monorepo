@@ -8,9 +8,22 @@ import { Id } from "./_generated/dataModel";
 export const create = mutation({
   args: {
     worksiteId: v.id("worksites"),
-    coordinates: v.array(v.array(v.number())),
+    type: v.string(), // "polygon", "circle", etc.
+    // For polygons
+    coordinates: v.optional(v.array(v.array(v.number()))),
+    // For circles
+    center: v.optional(v.object({
+      latitude: v.number(),
+      longitude: v.number(),
+    })),
+    radius: v.optional(v.number()),
+    // Basic info
     name: v.string(),
     description: v.optional(v.string()),
+    // Style options
+    strokeColor: v.optional(v.string()),
+    strokeWidth: v.optional(v.number()),
+    fillColor: v.optional(v.string()),
   },
   returns: v.id("geofences"),
   handler: async (ctx, args) => {
@@ -48,17 +61,34 @@ export const create = mutation({
       throw new Error("Insufficient permissions");
     }
 
-    // Validate that coordinates form a closed polygon
-    if (args.coordinates.length < 3) {
-      throw new Error("Geofence must have at least 3 points");
+    // Validate the shape data based on type
+    if (args.type === "polygon") {
+      if (!args.coordinates || args.coordinates.length < 3) {
+        throw new Error("Polygon geofence must have at least 3 points");
+      }
+    } else if (args.type === "circle") {
+      if (!args.center || !args.radius) {
+        throw new Error("Circle geofence requires center and radius");
+      }
+      if (args.radius <= 0) {
+        throw new Error("Radius must be greater than 0");
+      }
+    } else {
+      throw new Error(`Unsupported geofence type: ${args.type}`);
     }
 
     // Create the geofence
     const geofenceId = await ctx.db.insert("geofences", {
       worksiteId: args.worksiteId,
-      coordinates: args.coordinates,
+      type: args.type,
+      coordinates: args.coordinates || [],
+      center: args.center,
+      radius: args.radius,
       name: args.name,
       description: args.description,
+      strokeColor: args.strokeColor,
+      strokeWidth: args.strokeWidth,
+      fillColor: args.fillColor,
       isActive: true,
     });
 
@@ -76,9 +106,18 @@ export const listByWorksite = query({
   returns: v.array(
     v.object({
       _id: v.id("geofences"),
+      type: v.string(),
       name: v.string(),
       description: v.optional(v.string()),
       coordinates: v.array(v.array(v.number())),
+      center: v.optional(v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+      })),
+      radius: v.optional(v.number()),
+      strokeColor: v.optional(v.string()),
+      strokeWidth: v.optional(v.number()),
+      fillColor: v.optional(v.string()),
       isActive: v.boolean(),
     })
   ),
@@ -125,9 +164,15 @@ export const listByWorksite = query({
 
     return geofences.map((geofence) => ({
       _id: geofence._id,
+      type: geofence.type || "polygon", // Default to polygon for backward compatibility
       name: geofence.name,
       description: geofence.description,
       coordinates: geofence.coordinates,
+      center: geofence.center,
+      radius: geofence.radius,
+      strokeColor: geofence.strokeColor,
+      strokeWidth: geofence.strokeWidth,
+      fillColor: geofence.fillColor,
       isActive: geofence.isActive,
     }));
   },

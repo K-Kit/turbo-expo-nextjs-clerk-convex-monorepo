@@ -14,8 +14,19 @@ import { useQuery } from 'convex/react';
 import { api } from '@packages/backend/convex/_generated/api';
 import { Id } from '@packages/backend/convex/_generated/dataModel';
 import { Ionicons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-const WorksitesScreen = ({ navigation }) => {
+// Define navigation types
+type WorksitesScreenNavigationProp = NativeStackNavigationProp<{
+  WorksiteDetail: { worksiteId: string };
+  GeofenceEditor: { worksiteId: string };
+}>;
+
+type Props = {
+  navigation: WorksitesScreenNavigationProp;
+};
+
+const WorksitesScreen = ({ navigation }: Props) => {
   const { currentTenantId } = useTenant();
   const tenantId = currentTenantId ? currentTenantId as Id<"tenants"> : null;
   
@@ -25,7 +36,10 @@ const WorksitesScreen = ({ navigation }) => {
   ) || [];
   
   const renderWorksiteItem = ({ item }) => (
-    <TouchableOpacity style={styles.worksiteItem}>
+    <TouchableOpacity 
+      style={styles.worksiteItem}
+      onPress={() => navigation.navigate('WorksiteDetail', { worksiteId: item._id })}
+    >
       <View style={styles.worksiteHeader}>
         <Text style={styles.worksiteName}>{item.name}</Text>
         {item.userRole && (
@@ -35,6 +49,24 @@ const WorksitesScreen = ({ navigation }) => {
         )}
       </View>
       {item.address && <Text style={styles.addressText}>{item.address}</Text>}
+      
+      <View style={styles.actionButtons}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            navigation.navigate('GeofenceEditor', { worksiteId: item._id });
+          }}
+        >
+          <Ionicons name="git-branch-outline" size={16} color="#0D87E1" />
+          <Text style={styles.actionButtonText}>Geofence</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="information-circle-outline" size={16} color="#0D87E1" />
+          <Text style={styles.actionButtonText}>Details</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
   
@@ -172,6 +204,27 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: RFValue(16),
     fontFamily: 'SemiBold',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    paddingTop: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  actionButtonText: {
+    fontSize: RFValue(12),
+    fontFamily: 'Regular',
+    color: '#0D87E1',
+    marginLeft: 4,
   },
 });
 

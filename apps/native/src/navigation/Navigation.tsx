@@ -21,6 +21,9 @@ import MapScreen from "../screens/MapScreen";
 import WorksitesScreen from "../screens/WorksitesScreen";
 import IncidentsScreen from "../screens/IncidentsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import GeoJsonMapScreen from "../screens/GeoJsonMapScreen";
+import GeofenceEditorScreen from "../screens/GeofenceEditorScreen";
+import WorksiteDetailScreen from '../screens/WorksiteDetailScreen';
 
 // Phase 3 Screens
 import ReportIncidentScreen from "../screens/ReportIncidentScreen";
@@ -128,6 +131,9 @@ const Navigation = () => {
             <Stack.Screen name="ReportIncident" component={ReportIncidentScreen} />
             <Stack.Screen name="CreateWorkOrder" component={CreateWorkOrderScreen} />
             <Stack.Screen name="WorkOrderDetail" component={WorkOrderDetailScreen} />
+            <Stack.Screen name="GeoJsonMap" component={GeoJsonMapScreen} />
+            <Stack.Screen name="WorksiteDetail" component={WorksiteDetailScreen} />
+            <Stack.Screen name="GeofenceEditor" component={GeofenceEditorScreen} />
           </>
         )}
       </Stack.Navigator>

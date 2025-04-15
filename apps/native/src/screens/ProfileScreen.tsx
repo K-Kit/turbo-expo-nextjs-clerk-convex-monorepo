@@ -12,11 +12,19 @@ import { useUser, useAuth } from '@clerk/clerk-expo';
 import { useTenant } from '../context/TenantContext';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Add a navigation type
+type NavigationProps = NativeStackNavigationProp<{
+  GeoJsonMap: undefined;
+}>;
 
 const ProfileScreen = () => {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { currentTenantId, tenants, setCurrentTenantId } = useTenant();
+  const navigation = useNavigation<NavigationProps>();
   
   const currentTenant = tenants.find(tenant => tenant._id === currentTenantId) || null;
   
@@ -26,6 +34,10 @@ const ProfileScreen = () => {
   
   const handleSwitchTenant = () => {
     setCurrentTenantId(null);
+  };
+  
+  const handleNavigateToGeoJsonMap = () => {
+    navigation.navigate('GeoJsonMap');
   };
   
   if (!user) {
@@ -88,6 +100,14 @@ const ProfileScreen = () => {
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="help-circle-outline" size={20} color="#333333" />
             <Text style={styles.actionButtonText}>Help & Support</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={handleNavigateToGeoJsonMap}
+          >
+            <Ionicons name="map-outline" size={20} color="#333333" />
+            <Text style={styles.actionButtonText}>GeoJSON Map Demo</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

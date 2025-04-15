@@ -93,10 +93,23 @@ export default defineSchema(
     // Geofences table - polygon boundaries for worksites
     geofences: defineTable({
       worksiteId: v.id("worksites"),
-      // Store polygon coordinates as an array of [lat, lng] pairs
+      // Shape type: "polygon", "circle", etc.
+      type: v.string(),
+      // For polygon: Store polygon coordinates as an array of [lat, lng] pairs
+      // For other types, this can be empty or contain specific points
       coordinates: v.array(v.array(v.number())),
+      // For circle: center point and radius
+      center: v.optional(v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+      })),
+      radius: v.optional(v.number()), // in meters
       name: v.string(),
       description: v.optional(v.string()),
+      // Style properties
+      strokeColor: v.optional(v.string()),
+      strokeWidth: v.optional(v.number()),
+      fillColor: v.optional(v.string()),
       // Active status
       isActive: v.boolean(),
     }).index("by_worksite", ["worksiteId"]),
@@ -380,6 +393,25 @@ export default defineSchema(
       .index("by_contractor_profile", ["contractorProfileId"])
       .index("by_work_order", ["workOrderId"])
       .index("by_project", ["projectId"]),
+
+    userLocations: defineTable({
+      userId: v.string(),
+      tenantId: v.id("tenants"),
+      timestamp: v.number(),
+      coordinates: v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+        accuracy: v.optional(v.number()),
+        altitude: v.optional(v.number()),
+        speed: v.optional(v.number()),
+        heading: v.optional(v.number()),
+      }),
+      isTracking: v.boolean(),
+      deviceInfo: v.optional(v.string()),
+      batteryLevel: v.optional(v.number()),
+    }).index("by_user_tenant", ["userId", "tenantId"])
+      .index("by_tenant_timestamp", ["tenantId", "timestamp"])
+      .index("by_user_timestamp", ["userId", "timestamp"]),
   },
   {
     schemaValidation: false,

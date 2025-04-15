@@ -23,6 +23,7 @@ import type * as pois from "../pois.js";
 import type * as projects from "../projects.js";
 import type * as seed from "../seed.js";
 import type * as tenants from "../tenants.js";
+import type * as userLocations from "../userLocations.js";
 import type * as users from "../users.js";
 import type * as utils_auth from "../utils/auth.js";
 import type * as utils from "../utils.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   projects: typeof projects;
   seed: typeof seed;
   tenants: typeof tenants;
+  userLocations: typeof userLocations;
   users: typeof users;
   "utils/auth": typeof utils_auth;
   utils: typeof utils;
